@@ -170,6 +170,19 @@
         </div>
     </div>
 
+    <!-- Модальное окно для удаления игрока -->
+    <div id="deletePlayerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="deletePlayerModal">&times;</span>
+            <h2>Удалить игрока?</h2>
+            <p id="deletePlayerMessage">Вы уверены, что хотите удалить этого игрока из команды? Он будет удален из всех игр. Это действие нельзя отменить.</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('deletePlayerModal')">Отмена</button>
+                <button id="confirmDeletePlayerBtn" class="btn btn-primary" style="background: var(--highlight-color);">Удалить</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Контейнер для экспорта в JPEG (скрыт, но видим для html2canvas) -->
     <div id="exportContainer" style="position: fixed; top: 0; left: 0; width: 2480px; height: 3508px; overflow: hidden; z-index: -1; pointer-events: none;">
         <div id="exportContent" class="export-a4"></div>

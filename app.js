@@ -255,6 +255,15 @@ function initializeEventListeners() {
         }
     });
 
+    // Подтверждение удаления игрока
+    document.getElementById('confirmDeletePlayerBtn').addEventListener('click', () => {
+        const playerId = parseInt(document.getElementById('confirmDeletePlayerBtn').dataset.playerId);
+        if (playerId) {
+            removePlayer(playerId);
+            closeModal('deletePlayerModal');
+        }
+    });
+
     // Кнопка возврата к списку игр
     document.getElementById('backToGamesBtn').addEventListener('click', () => {
         backToGames();
@@ -308,26 +317,45 @@ function addPlayer() {
     closeModal('addPlayerModal');
 }
 
+// Подтверждение удаления игрока
+function deletePlayerConfirm(playerId) {
+    const player = team.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Обновляем сообщение в модальном окне
+    const message = document.getElementById('deletePlayerMessage');
+    message.textContent = `Вы уверены, что хотите удалить игрока "${player.name}" (№${player.number || '?'}) из команды? Он будет удален из всех игр. Это действие нельзя отменить.`;
+    
+    // Сохраняем ID игрока в кнопке
+    document.getElementById('confirmDeletePlayerBtn').dataset.playerId = playerId;
+    
+    // Показываем модальное окно
+    document.getElementById('deletePlayerModal').style.display = 'block';
+}
+
 // Удаление игрока из команды
 function removePlayer(playerId) {
-    if (confirm('Удалить игрока из команды?')) {
-        team = team.filter(p => p.id !== playerId);
+    team = team.filter(p => p.id !== playerId);
+    
+    // Удаляем из всех игр
+    games.forEach(game => {
+        game.readyPlayers = game.readyPlayers.map(slot => slot && slot.id === playerId ? null : slot);
+        game.lineup = game.lineup.map(slot => slot && slot.id === playerId ? null : slot);
         
-        // Удаляем из всех игр
-        games.forEach(game => {
-            game.readyPlayers = game.readyPlayers.map(slot => slot && slot.id === playerId ? null : slot);
-            game.lineup = game.lineup.map(slot => slot && slot.id === playerId ? null : slot);
-        });
-        
-        saveData();
-        renderTeam();
-        if (currentGameId) {
-            renderReadyPlayers();
-            renderReadyPlayersCompact();
-            renderLineup();
-            updateReadyCount();
-            updateReadyCount2();
+        // Удаляем статус игрока
+        if (game.playerStatuses && game.playerStatuses[playerId]) {
+            delete game.playerStatuses[playerId];
         }
+    });
+    
+    saveData();
+    renderTeam();
+    if (currentGameId) {
+        renderReadyPlayers();
+        renderReadyPlayersCompact();
+        renderLineup();
+        updateReadyCount();
+        updateReadyCount2();
     }
 }
 
@@ -410,6 +438,7 @@ function renderTeam() {
             </div>
             <div class="player-actions">
                 <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
+                <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить">🗑️</button>
             </div>
         `;
 
