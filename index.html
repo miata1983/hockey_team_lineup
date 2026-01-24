@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Формирование состава на хоккейную игру">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Хоккейный Состав</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏒 Формирование состава</h1>
+            <div class="header-actions">
+                <button id="addPlayerBtn" class="btn btn-primary">+ Добавить игрока</button>
+                <button id="saveAsJpegBtn" class="btn btn-success" style="display: none;">💾 Сохранить как JPEG</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Список игр (показывается когда нет выбранной игры) -->
+            <div id="gamesSection" class="games-section" style="display: block;">
+                <h2>Игры</h2>
+                <button id="newGameBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 15px;">+ Новая игра</button>
+                <div id="gamesList" class="games-list">
+                    <!-- Список игр будет добавлен динамически -->
+                </div>
+            </div>
+
+            <!-- Работа с текущей игрой -->
+            <div id="gameWorkSection" class="game-work-section" style="display: none;">
+                <!-- Информация об игре -->
+                <div id="gameInfo" class="game-info">
+                    <div class="game-header">
+                        <input type="text" id="gameTitle" class="game-title-input" placeholder="Название игры">
+                        <div class="game-meta">
+                            <input type="date" id="gameDate" class="game-date-input">
+                            <input type="time" id="gameTime" class="game-time-input" placeholder="Время">
+                            <input type="text" id="gameStadium" class="game-stadium-input" placeholder="Стадион">
+                            <input type="text" id="gameScore" class="game-score-input" placeholder="Счет">
+                            <button id="backToGamesBtn" class="btn btn-secondary">← К списку игр</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Этап 1: Формирование списка готовых (Команда + Готовые играть) -->
+                <div id="stage1Section" class="stage-section" style="display: none;">
+                    <div class="two-columns-layout">
+                        <!-- Колонка 1: Команда -->
+                        <section class="team-column">
+                            <h2>Команда</h2>
+                            <div id="teamList" class="team-list">
+                                <!-- Игроки будут добавлены динамически -->
+                            </div>
+                        </section>
+
+                        <!-- Колонка 2: Готовые играть -->
+                        <section class="ready-column">
+                            <h2>Готовые играть <span id="readyCount">0/16</span></h2>
+                            <div id="readyPlayersList" class="ready-players-list">
+                                <!-- 16 позиций для готовых играть -->
+                            </div>
+                            <button id="toLineupStageBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">→ Далее к расстановке</button>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Этап 2: Расстановка (Готовые играть + Расстановка по звеньям) -->
+                <div id="stage2Section" class="stage-section" style="display: none;">
+                    <button id="backToReadyBtn" class="btn btn-secondary" style="margin-bottom: 15px;">← Назад к списку готовых</button>
+                    
+                    <div class="two-columns-layout">
+                        <!-- Колонка 1: Готовые играть (компактная) -->
+                        <section class="ready-column-compact">
+                            <h2>Готовые играть <span id="readyCount2">0/16</span></h2>
+                            <div id="readyPlayersList2" class="ready-players-compact">
+                                <!-- 16 игроков компактно -->
+                            </div>
+                        </section>
+
+                        <!-- Колонка 2: Расстановка -->
+                        <section class="lineup-column-full">
+                            <h2>Расстановка</h2>
+                            <!-- Вратарь -->
+                            <div class="goalie-section">
+                                <h3>Вратарь</h3>
+                                <div id="goalieSlot" class="lineup-slot goalie-slot">
+                                    <!-- Вратарь будет здесь -->
+                                </div>
+                            </div>
+                            <!-- Три звена -->
+                            <div id="linesContainer" class="lines-container-full">
+                                <!-- Звенья будут созданы динамически -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно для добавления игрока -->
+    <div id="addPlayerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="addPlayerModal">&times;</span>
+            <h2>Добавить игрока</h2>
+            <form id="addPlayerForm">
+                <div class="form-group">
+                    <label for="playerName">Имя игрока:</label>
+                    <input type="text" id="playerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="playerNumber">Номер:</label>
+                    <input type="number" id="playerNumber" min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="playerPosition">Позиция:</label>
+                    <select id="playerPosition">
+                        <option value="Вратарь">Вратарь</option>
+                        <option value="Защитник">Защитник</option>
+                        <option value="Нападающий">Нападающий</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования игрока -->
+    <div id="editPlayerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="editPlayerModal">&times;</span>
+            <h2>Редактировать игрока</h2>
+            <form id="editPlayerForm">
+                <input type="hidden" id="editPlayerId">
+                <div class="form-group">
+                    <label for="editPlayerName">Имя игрока:</label>
+                    <input type="text" id="editPlayerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPlayerNumber">Номер:</label>
+                    <input type="number" id="editPlayerNumber" min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="editPlayerPosition">Позиция:</label>
+                    <select id="editPlayerPosition">
+                        <option value="Вратарь">Вратарь</option>
+                        <option value="Защитник">Защитник</option>
+                        <option value="Нападающий">Нападающий</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для удаления игры -->
+    <div id="deleteGameModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="deleteGameModal">&times;</span>
+            <h2>Удалить игру?</h2>
+            <p>Вы уверены, что хотите удалить эту игру? Это действие нельзя отменить.</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('deleteGameModal')">Отмена</button>
+                <button id="confirmDeleteGameBtn" class="btn btn-primary" style="background: var(--highlight-color);">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер для экспорта в JPEG (скрыт, но видим для html2canvas) -->
+    <div id="exportContainer" style="position: fixed; top: 0; left: 0; width: 2480px; height: 3508px; overflow: hidden; z-index: -1; pointer-events: none;">
+        <div id="exportContent" class="export-a4"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
