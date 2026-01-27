@@ -157,6 +157,7 @@ function createNewGame() {
         weekday: '',
         stadium: '',
         score: '',
+        points: '',
         playerStatuses: {}, // Статусы игроков: 'ready', 'not-ready' (Пас), 'doubtful' (Под ?), 'survey' (Опрос), null
         readyPlayers: Array(16).fill(null), // Список готовых играть (16 позиций)
         lineup: Array(16).fill(null) // Расстановка по пятеркам (16 позиций)
@@ -189,6 +190,7 @@ function selectGame(gameId) {
     if (game.time === undefined) game.time = '';
     if (game.weekday === undefined) game.weekday = '';
     if (game.stadium === undefined) game.stadium = '';
+    if (game.points === undefined) game.points = '';
     
     // Заполняем информацию об игре
     document.getElementById('gameTitle').value = game.title;
@@ -200,6 +202,10 @@ function selectGame(gameId) {
     }
     document.getElementById('gameStadium').value = game.stadium || '';
     document.getElementById('gameScore').value = game.score;
+    const pointsEl = document.getElementById('gamePoints');
+    if (pointsEl) {
+        pointsEl.value = game.points || '';
+    }
     
     // Скрываем список игр, показываем работу с игрой
     document.getElementById('gamesSection').style.display = 'none';
@@ -328,6 +334,10 @@ function initializeEventListeners() {
     }
     document.getElementById('gameStadium').addEventListener('change', saveGameInfo);
     document.getElementById('gameScore').addEventListener('change', saveGameInfo);
+    const gamePointsEl = document.getElementById('gamePoints');
+    if (gamePointsEl) {
+        gamePointsEl.addEventListener('change', saveGameInfo);
+    }
 
     // Кнопка сохранения в JPEG
     document.getElementById('saveAsJpegBtn').addEventListener('click', () => {
@@ -448,6 +458,8 @@ function saveGameInfo() {
     game.weekday = weekdayEl ? weekdayEl.value : '';
     game.stadium = document.getElementById('gameStadium').value;
     game.score = document.getElementById('gameScore').value;
+    const pointsEl = document.getElementById('gamePoints');
+    game.points = pointsEl ? pointsEl.value : '';
     
     saveData();
     renderGamesList();
@@ -573,47 +585,61 @@ function renderTeam() {
         }
     });
 
-    // Рендерим игроков: сначала без статуса, затем Опрос, Под ?, Пас
-    const playersToRender = [...noStatusPlayers, ...surveyPlayers, ...maybePlayers, ...passPlayers];
+    // Вспомогательная функция для отрисовки группы
+    const renderGroup = (players, title, extraClass) => {
+        if (!players.length) return;
 
-    playersToRender.forEach(player => {
-        const status = game.playerStatuses[player.id] || null;
-        const playerCard = document.createElement('div');
-        playerCard.className = `player-card ${status === 'not-ready' ? 'not-ready' : ''} ${status === 'doubtful' ? 'doubtful' : ''} ${status === 'survey' ? 'survey' : ''}`;
-        playerCard.dataset.playerId = player.id;
+        const header = document.createElement('div');
+        header.className = `team-status-header ${extraClass}`;
+        header.textContent = title;
+        teamList.appendChild(header);
 
-        const positionShort = getPositionShort(player.position);
+        players.forEach(player => {
+            const status = game.playerStatuses[player.id] || null;
+            const playerCard = document.createElement('div');
+            playerCard.className = `player-card ${status === 'not-ready' ? 'not-ready' : ''} ${status === 'doubtful' ? 'doubtful' : ''} ${status === 'survey' ? 'survey' : ''}`;
+            playerCard.dataset.playerId = player.id;
 
-        playerCard.innerHTML = `
-            <div class="player-info">
-                <div class="player-number">${player.number || '?'}</div>
-                <div class="player-details">
-                    <h3>${player.name}</h3>
-                    <p>${positionShort}</p>
+            const positionShort = getPositionShort(player.position);
+
+            playerCard.innerHTML = `
+                <div class="player-info">
+                    <div class="player-number">${player.number || '?'}</div>
+                    <div class="player-details">
+                        <h3>${player.name}</h3>
+                        <p>${positionShort}</p>
+                    </div>
                 </div>
-            </div>
-            <div class="player-status-buttons">
-                <button class="status-btn status-survey ${status === 'survey' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'survey')" 
-                        title="Опрос">Опрос</button>
-                <button class="status-btn status-ready ${status === 'ready' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'ready')" 
-                        title="Готов">Готов</button>
-                <button class="status-btn status-doubtful ${status === 'doubtful' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'doubtful')" 
-                        title="Под вопросом">Под ?</button>
-                <button class="status-btn status-not-ready ${status === 'not-ready' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'not-ready')" 
-                        title="Пас">Пас</button>
-            </div>
-            <div class="player-actions">
-                <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
-                <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить">🗑️</button>
-            </div>
-        `;
+                <div class="player-status-buttons">
+                    <button class="status-btn status-survey ${status === 'survey' ? 'active' : ''}" 
+                            onclick="setPlayerStatus(${player.id}, 'survey')" 
+                            title="Опрос">Опрос</button>
+                    <button class="status-btn status-ready ${status === 'ready' ? 'active' : ''}" 
+                            onclick="setPlayerStatus(${player.id}, 'ready')" 
+                            title="Готов">Готов</button>
+                    <button class="status-btn status-doubtful ${status === 'doubtful' ? 'active' : ''}" 
+                            onclick="setPlayerStatus(${player.id}, 'doubtful')" 
+                            title="Под вопросом">Под ?</button>
+                    <button class="status-btn status-not-ready ${status === 'not-ready' ? 'active' : ''}" 
+                            onclick="setPlayerStatus(${player.id}, 'not-ready')" 
+                            title="Пас">Пас</button>
+                </div>
+                <div class="player-actions">
+                    <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
+                    <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить">🗑️</button>
+                </div>
+            `;
 
-        teamList.appendChild(playerCard);
-    });
+            teamList.appendChild(playerCard);
+        });
+    };
+
+    // Сначала без статуса
+    renderGroup(noStatusPlayers, 'Без статуса', 'team-status-none');
+    // Затем Опрос, Под ?, Пас
+    renderGroup(surveyPlayers, 'Опрос', 'team-status-survey');
+    renderGroup(maybePlayers, 'Под ?', 'team-status-maybe');
+    renderGroup(passPlayers, 'Пас', 'team-status-pass');
 }
 
 // Установка статуса игрока
@@ -765,10 +791,14 @@ function renderReadyPlayers() {
         slot.className = `ready-player-slot ${player ? 'filled' : 'empty'}`;
         slot.dataset.slotIndex = index;
 
-        const slotNumber = document.createElement('div');
-        slotNumber.className = 'ready-slot-number';
-        slotNumber.textContent = index + 1;
-        slot.appendChild(slotNumber);
+        // Для вратаря (слот 0) не показываем порядковый номер
+        if (index !== 0) {
+            const slotNumber = document.createElement('div');
+            slotNumber.className = 'ready-slot-number';
+            // Сквозная нумерация начинается с первого полевого игрока
+            slotNumber.textContent = index;
+            slot.appendChild(slotNumber);
+        }
 
         const slotContent = document.createElement('div');
         slotContent.className = 'ready-slot-content';
@@ -793,9 +823,17 @@ function renderReadyPlayers() {
                 playerInfo.addEventListener('dragend', handleDragEnd);
             }
         } else {
-            slotContent.innerHTML = `
-                <div class="empty">${index === 0 ? 'Вратарь' : 'Полевой игрок'}</div>
-            `;
+            if (index === 0) {
+                // Для вратаря показываем подпись
+                slotContent.innerHTML = `
+                    <div class="empty">Вратарь</div>
+                `;
+            } else {
+                // Для пустых полевых только номер слева, без текста
+                slotContent.innerHTML = `
+                    <div class="empty"></div>
+                `;
+            }
         }
 
         slot.appendChild(slotContent);

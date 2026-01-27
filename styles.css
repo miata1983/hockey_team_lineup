@@ -492,11 +492,16 @@ header h1 {
     width: 90px;
 }
 
+.game-points-input {
+    width: 70px;
+}
+
 .game-date-input:focus,
 .game-time-input:focus,
 .game-weekday-select:focus,
 .game-stadium-input:focus,
-.game-score-input:focus {
+.game-score-input:focus,
+.game-points-input:focus {
     outline: none;
     border-color: var(--highlight-color);
 }
@@ -711,6 +716,34 @@ header h1 {
     height: 0; /* Критично для flex-прокрутки */
 }
 
+.team-status-header {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+.team-status-none {
+    background: rgba(255, 255, 255, 0.04);
+    color: #ccc;
+}
+
+.team-status-survey {
+    background: rgba(255, 235, 59, 0.25);
+    color: #ffeb3b;
+}
+
+.team-status-maybe {
+    background: rgba(41, 182, 246, 0.25);
+    color: #29b6f6;
+}
+
+.team-status-pass {
+    background: rgba(229, 57, 53, 0.25);
+    color: #ef9a9a;
+}
 .team-list::-webkit-scrollbar,
 .games-list::-webkit-scrollbar,
 .ready-players-list::-webkit-scrollbar {
