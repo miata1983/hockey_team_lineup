@@ -156,7 +156,7 @@ function createNewGame() {
         time: '',
         stadium: '',
         score: '',
-        playerStatuses: {}, // Статусы игроков: 'ready', 'not-ready', 'doubtful', null
+        playerStatuses: {}, // Статусы игроков: 'ready', 'not-ready' (Пас), 'doubtful' (Под ?), 'survey' (Опрос), null
         readyPlayers: Array(16).fill(null), // Список готовых играть (16 позиций)
         lineup: Array(16).fill(null) // Расстановка по пятеркам (16 позиций)
     };
@@ -338,6 +338,14 @@ function initializeEventListeners() {
     document.getElementById('copyTeamCodeBtn').addEventListener('click', () => {
         copyTeamCode();
     });
+
+    // Кнопка копирования списка команды как текста
+    const copyTeamTextBtn = document.getElementById('copyTeamTextBtn');
+    if (copyTeamTextBtn) {
+        copyTeamTextBtn.addEventListener('click', () => {
+            copyTeamText();
+        });
+    }
 
     // Кнопка установки PWA
     const pwaInstallBtn = document.getElementById('pwaInstallBtn');
@@ -531,31 +539,35 @@ function renderTeam() {
     }
 
     // Разделяем игроков по статусам
-    const readyPlayers = [];
-    const notReadyPlayers = [];
-    const doubtfulPlayers = [];
+    const passPlayers = [];
+    const maybePlayers = [];
+    const surveyPlayers = [];
     const noStatusPlayers = [];
 
     team.forEach(player => {
         const status = game.playerStatuses[player.id];
-        if (status === 'ready') {
-            readyPlayers.push(player);
-        } else if (status === 'not-ready') {
-            notReadyPlayers.push(player);
+        if (status === 'not-ready') {
+            // Пас
+            passPlayers.push(player);
         } else if (status === 'doubtful') {
-            doubtfulPlayers.push(player);
-        } else {
+            // Под ?
+            maybePlayers.push(player);
+        } else if (status === 'survey') {
+            // Опрос
+            surveyPlayers.push(player);
+        } else if (status !== 'ready') {
+            // Без статуса (готовые не показываем в списке команды)
             noStatusPlayers.push(player);
         }
     });
 
-    // Рендерим игроков: сначала без статуса, потом сомневающиеся, потом не готовые
-    const playersToRender = [...noStatusPlayers, ...doubtfulPlayers, ...notReadyPlayers];
+    // Рендерим игроков: сначала без статуса, затем Опрос, Под ?, Пас
+    const playersToRender = [...noStatusPlayers, ...surveyPlayers, ...maybePlayers, ...passPlayers];
 
     playersToRender.forEach(player => {
         const status = game.playerStatuses[player.id] || null;
         const playerCard = document.createElement('div');
-        playerCard.className = `player-card ${status === 'not-ready' ? 'not-ready' : ''} ${status === 'doubtful' ? 'doubtful' : ''}`;
+        playerCard.className = `player-card ${status === 'not-ready' ? 'not-ready' : ''} ${status === 'doubtful' ? 'doubtful' : ''} ${status === 'survey' ? 'survey' : ''}`;
         playerCard.dataset.playerId = player.id;
 
         const positionShort = getPositionShort(player.position);
@@ -571,13 +583,16 @@ function renderTeam() {
             <div class="player-status-buttons">
                 <button class="status-btn status-ready ${status === 'ready' ? 'active' : ''}" 
                         onclick="setPlayerStatus(${player.id}, 'ready')" 
-                        title="Готов">готов</button>
+                        title="Готов">Готов</button>
                 <button class="status-btn status-not-ready ${status === 'not-ready' ? 'active' : ''}" 
                         onclick="setPlayerStatus(${player.id}, 'not-ready')" 
-                        title="Не готов">не готов</button>
+                        title="Пас">Пас</button>
                 <button class="status-btn status-doubtful ${status === 'doubtful' ? 'active' : ''}" 
                         onclick="setPlayerStatus(${player.id}, 'doubtful')" 
-                        title="Сомневается">сомневается</button>
+                        title="Под вопросом">Под ?</button>
+                <button class="status-btn status-survey ${status === 'survey' ? 'active' : ''}" 
+                        onclick="setPlayerStatus(${player.id}, 'survey')" 
+                        title="Опрос">Опрос</button>
             </div>
             <div class="player-actions">
                 <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
@@ -638,24 +653,9 @@ function setPlayerStatus(playerId, status) {
                 game.readyPlayers[oldSlotIndex] = null;
             }
         }
-    } else if (status === 'not-ready') {
-        // Игрок не готов - убираем из готовых, помечаем статус
-        game.playerStatuses[playerId] = 'not-ready';
-        
-        // Удаляем из readyPlayers если был там
-        const slotIndex = game.readyPlayers.findIndex(p => p && p.id === playerId);
-        if (slotIndex !== -1) {
-            game.readyPlayers[slotIndex] = null;
-        }
-        
-        // Удаляем из lineup если был там
-        const lineupIndex = game.lineup.findIndex(p => p && p.id === playerId);
-        if (lineupIndex !== -1) {
-            game.lineup[lineupIndex] = null;
-        }
-    } else if (status === 'doubtful') {
-        // Игрок сомневается - убираем из готовых, но оставляем в списке команды
-        game.playerStatuses[playerId] = 'doubtful';
+    } else if (status === 'not-ready' || status === 'doubtful' || status === 'survey') {
+        // Неготовые / под вопросом / опрос - убираем из готовых и состава, помечаем статус
+        game.playerStatuses[playerId] = status;
         
         // Удаляем из readyPlayers если был там
         const slotIndex = game.readyPlayers.findIndex(p => p && p.id === playerId);
@@ -1761,6 +1761,107 @@ function copyTeamCode() {
         } catch (err) {
             alert('Не удалось скопировать. Показываю код в консоли.');
             console.log('Код для вставки в app.js:\n', code);
+        }
+        document.body.removeChild(textarea);
+    });
+}
+
+// Копирование списка команды как текста, сгруппированного по статусам
+function copyTeamText() {
+    const game = getCurrentGame();
+    if (!game) {
+        alert('Сначала выберите игру, чтобы скопировать список команды со статусами.');
+        return;
+    }
+
+    if (team.length === 0) {
+        alert('Список команды пуст. Добавьте игроков перед копированием.');
+        return;
+    }
+
+    if (!game.playerStatuses) {
+        game.playerStatuses = {};
+    }
+
+    const groups = {
+        ready: [],
+        survey: [],
+        doubtful: [],
+        'not-ready': [],
+        none: []
+    };
+
+    team.forEach(player => {
+        const status = game.playerStatuses[player.id] || null;
+        const line = `${player.number || '?'} ${player.name} (${getPositionShort(player.position)})`;
+        if (status === 'ready') {
+            groups.ready.push(line);
+        } else if (status === 'survey') {
+            groups.survey.push(line);
+        } else if (status === 'doubtful') {
+            groups.doubtful.push(line);
+        } else if (status === 'not-ready') {
+            groups['not-ready'].push(line);
+        } else {
+            groups.none.push(line);
+        }
+    });
+
+    const lines = [];
+
+    if (groups.ready.length) {
+        lines.push('ГОТОВЫ:');
+        lines.push(...groups.ready);
+        lines.push('');
+    }
+
+    if (groups.survey.length) {
+        lines.push('ОПРОС:');
+        lines.push(...groups.survey);
+        lines.push('');
+    }
+
+    if (groups.doubtful.length) {
+        lines.push('ПОД ?:');
+        lines.push(...groups.doubtful);
+        lines.push('');
+    }
+
+    if (groups['not-ready'].length) {
+        lines.push('ПАС:');
+        lines.push(...groups['not-ready']);
+        lines.push('');
+    }
+
+    if (groups.none.length) {
+        lines.push('БЕЗ СТАТУСА:');
+        lines.push(...groups.none);
+        lines.push('');
+    }
+
+    const text = lines.join('\n').trim();
+
+    if (!text) {
+        alert('Нет данных для копирования.');
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Список команды со статусами скопирован в буфер обмена.');
+    }).catch(() => {
+        // Fallback для старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('Список команды со статусами скопирован в буфер обмена.');
+        } catch (err) {
+            alert('Не удалось скопировать. Текст выведен в консоль.');
+            console.log('Список команды:\n' + text);
         }
         document.body.removeChild(textarea);
     });
