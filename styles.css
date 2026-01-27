@@ -1441,7 +1441,9 @@ header h1 {
 }
 
 .export-game-date,
+.export-game-weekday,
 .export-game-stadium,
+.export-game-color,
 .export-game-score {
     font-size: 64px !important;
     font-weight: bold !important;

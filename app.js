@@ -800,7 +800,7 @@ function renderGamesList() {
                 <div class="game-item-meta">
                     <span class="game-item-date">${dateTimeStr}</span>
                     ${game.stadium ? `<span class="game-item-stadium">📍 ${game.stadium}</span>` : ''}
-                    ${game.score ? `<span class="game-item-score">${game.score}</span>` : ''}
+                    ${game.score ? `<span class="game-item-score">${game.score}${game.points !== undefined && game.points !== '' ? ` ${game.points} оч` : ''}</span>` : ''}
                 </div>
             </div>
             <div class="game-item-actions">
@@ -1706,12 +1706,26 @@ function generateExportHTML(game) {
         dateTimeStr += ` ${game.time}`;
     }
 
+    // Формируем строку с днем недели
+    let weekdayStr = '';
+    if (game.weekday) {
+        weekdayStr = `<div class="export-game-weekday">${game.weekday}</div>`;
+    }
+
+    // Формируем строку с цветом формы
+    let colorStr = '';
+    if (game.color) {
+        colorStr = `<div class="export-game-color">ФОРМА ${game.color.toUpperCase()}</div>`;
+    }
+
     return `
         <div class="export-left">
             <div class="export-title">${game.title || 'Состав команды'}</div>
             <div class="export-game-info">
                 <div class="export-game-date">Дата: ${dateTimeStr}</div>
+                ${weekdayStr}
                 ${game.stadium ? `<div class="export-game-stadium">Стадион: ${game.stadium}</div>` : ''}
+                ${colorStr}
                 ${game.score ? `<div class="export-game-score">Счет: ${game.score}</div>` : ''}
             </div>
             <div class="export-section-title">Список игроков</div>
