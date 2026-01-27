@@ -1,12 +1,13 @@
-const CACHE_NAME = 'hockey-lineup-v3';
+const CACHE_NAME = 'hockey-lineup-v4';
+const BASE_PATH = '/hockey_team_lineup/';
 const urlsToCache = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'styles.css',
+  BASE_PATH + 'app.js',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'icon-192.png',
+  BASE_PATH + 'icon-512.png'
 ];
 
 // Установка service worker
@@ -136,7 +137,7 @@ self.addEventListener('fetch', (event) => {
             console.error('[Service Worker] Ошибка загрузки:', request.url, error);
             // Если это HTML страница и она не в кэше, возвращаем index.html
             if (request.headers.get('accept') && request.headers.get('accept').includes('text/html')) {
-              return caches.match('./index.html');
+              return caches.match(BASE_PATH + 'index.html') || caches.match('./index.html') || caches.match('/index.html');
             }
             // Для других типов возвращаем ошибку
             throw error;

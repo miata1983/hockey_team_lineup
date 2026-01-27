@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Регистрация service worker для PWA
     if ('serviceWorker' in navigator) {
+        // Определяем правильный путь для Service Worker
+        // Для GitHub Pages используем относительный путь от корня репозитория
+        const swPath = location.pathname.includes('/hockey_team_lineup/') 
+            ? '/hockey_team_lineup/service-worker.js' 
+            : './service-worker.js';
+        const swScope = location.pathname.includes('/hockey_team_lineup/') 
+            ? '/hockey_team_lineup/' 
+            : './';
+        
         // Проверяем, что мы на HTTPS или localhost
         const isSecure = location.protocol === 'https:' || 
                         location.hostname === 'localhost' || 
@@ -23,8 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('⚠️ Service Worker требует HTTPS или localhost. Текущий протокол:', location.protocol);
         }
         
-        navigator.serviceWorker.register('./service-worker.js', { 
-            scope: './',
+        navigator.serviceWorker.register(swPath, { 
+            scope: swScope,
             updateViaCache: 'none'
         })
             .then(reg => {
