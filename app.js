@@ -361,6 +361,24 @@ function initializeEventListeners() {
         });
     }
 
+    // Гамбургер-меню для служебных действий
+    const menuToggleBtn = document.getElementById('menuToggleBtn');
+    const headerMenu = document.getElementById('headerMenu');
+    if (menuToggleBtn && headerMenu) {
+        menuToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = headerMenu.classList.contains('open');
+            headerMenu.classList.toggle('open', !isOpen);
+        });
+
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!headerMenu.contains(e.target) && !menuToggleBtn.contains(e.target)) {
+                headerMenu.classList.remove('open');
+            }
+        });
+    }
+
     // Подтверждение импорта данных
     document.getElementById('confirmImportBtn').addEventListener('click', () => {
         const fileInput = document.getElementById('importFileInput');

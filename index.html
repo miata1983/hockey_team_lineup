@@ -32,15 +32,20 @@
 
     <div class="container">
         <header>
-            <h1>🏒 Формирование состава</h1>
+            <div class="header-main">
+                <h1>🏒 Формирование состава</h1>
+                <button id="menuToggleBtn" class="btn btn-secondary header-menu-toggle" aria-label="Служебное меню">☰</button>
+            </div>
             <div class="header-actions">
                 <button id="addPlayerBtn" class="btn btn-primary">+ Добавить игрока</button>
+                <button id="saveAsJpegBtn" class="btn btn-success" style="display: none;">💾 Сохранить как JPEG</button>
+            </div>
+            <div id="headerMenu" class="header-menu">
                 <button id="exportDataBtn" class="btn btn-secondary" title="Экспортировать данные в JSON">📥 Экспорт данных</button>
                 <button id="importDataBtn" class="btn btn-secondary" title="Импортировать данные из JSON">📤 Импорт данных</button>
                 <button id="copyTeamCodeBtn" class="btn btn-secondary" title="Скопировать список команды в код">📋 Код команды</button>
                 <button id="showPWAInstallBtn" class="btn btn-secondary" title="Показать установку приложения" style="display: none;">📱 Установить приложение</button>
                 <button id="pwaCheckBtn" class="btn btn-secondary" title="Диагностика PWA" onclick="window.location.href='pwa-check.html'">🔍 Диагностика PWA</button>
-                <button id="saveAsJpegBtn" class="btn btn-success" style="display: none;">💾 Сохранить как JPEG</button>
             </div>
         </header>
 

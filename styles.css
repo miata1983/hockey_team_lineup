@@ -32,7 +32,7 @@ body {
 }
 
 header {
-    text-align: center;
+    position: relative;
     margin-bottom: 30px;
     padding: 20px;
     background: var(--card-bg);
@@ -40,20 +40,58 @@ header {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
+.header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
 header h1 {
     font-size: 2.5em;
-    margin-bottom: 15px;
     background: linear-gradient(45deg, var(--highlight-color), #ff6b9d);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin: 0;
 }
 
 .header-actions {
     display: flex;
     gap: 10px;
-    justify-content: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
+}
+
+.header-menu-toggle {
+    padding: 8px 14px;
+    font-size: 1.1em;
+}
+
+.header-menu {
+    position: absolute;
+    top: 100%;
+    right: 20px;
+    margin-top: 8px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2000;
+    min-width: 220px;
+}
+
+.header-menu.open {
+    display: flex;
+}
+
+.header-menu .btn {
+    width: 100%;
+    text-align: left;
 }
 
 .btn {
