@@ -492,17 +492,7 @@ header h1 {
     width: 90px;
 }
 
-.game-points-select {
-    width: 90px;
-    padding: 8px;
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: 0.9em;
-    transition: all 0.3s ease;
-}
-
+.game-points-select,
 .game-color-select {
     width: 90px;
     padding: 8px;
@@ -512,6 +502,15 @@ header h1 {
     color: var(--text-color);
     font-size: 0.9em;
     transition: all 0.3s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.game-points-select::-ms-expand,
+.game-color-select::-ms-expand {
+    display: none;
 }
 
 .game-date-input:focus,
