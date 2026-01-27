@@ -861,8 +861,22 @@ function renderGoalieSlot() {
             </div>
         `;
     } else {
+        // Если вратарь не выбран, показываем подсказку и выпадающий список
+        // для выбора из списка готовых вратарей
+        const availableGoalies = game.readyPlayers.filter(p => p && p.position === 'Вратарь' && !game.lineup.some(lp => lp && lp.id === p.id));
+
+        const optionsHtml = availableGoalies.map(p => `
+            <option value="${p.id}">${p.number || '?'} — ${p.name}</option>
+        `).join('');
+
         slotContent.innerHTML = `
-            <div class="empty">Вратарь</div>
+            <div class="empty-slot-select">
+                <div class="empty">Вратарь</div>
+                <select class="lineup-select" onchange="handleLineupSelect(0, this.value)">
+                    <option value="">Выбрать из готовых</option>
+                    ${optionsHtml}
+                </select>
+            </div>
         `;
     }
 
@@ -930,8 +944,29 @@ function createFieldSlot(index, expectedPosition) {
             </div>
         `;
     } else {
+        // Пустой слот: показываем ожидаемую позицию и выпадающий список
+        // для выбора игрока из списка готовых
+        const usedIds = new Set(game.lineup.filter(p => p).map(p => p.id));
+        const availablePlayers = game.readyPlayers.filter(p => {
+            if (!p) return false;
+            if (usedIds.has(p.id)) return false;
+            // Вратаря можно ставить только в слот 0
+            if (index !== 0 && p.position === 'Вратарь') return false;
+            return true;
+        });
+
+        const optionsHtml = availablePlayers.map(p => `
+            <option value="${p.id}">${p.number || '?'} — ${p.name}</option>
+        `).join('');
+
         slotContent.innerHTML = `
-            <div class="empty">${expectedPosition}</div>
+            <div class="empty-slot-select">
+                <div class="empty">${expectedPosition}</div>
+                <select class="lineup-select" onchange="handleLineupSelect(${index}, this.value)">
+                    <option value="">Выбрать из готовых</option>
+                    ${optionsHtml}
+                </select>
+            </div>
         `;
     }
 
@@ -941,6 +976,45 @@ function createFieldSlot(index, expectedPosition) {
     slot.addEventListener('dragleave', handleDragLeave);
 
     return slot;
+}
+
+// Выбор игрока в слот расстановки из выпадающего списка
+function handleLineupSelect(slotIndex, playerIdValue) {
+    const game = getCurrentGame();
+    if (!game) return;
+
+    const playerId = parseInt(playerIdValue, 10);
+    if (!playerId) return;
+
+    const player = game.readyPlayers.find(p => p && p.id === playerId);
+    if (!player) {
+        alert('Игрок не найден в списке готовых.');
+        return;
+    }
+
+    // Проверяем, не занят ли игрок уже в составе
+    if (game.lineup.some(p => p && p.id === player.id)) {
+        alert('Этот игрок уже в составе!');
+        return;
+    }
+
+    // Проверка позиции только для слота вратаря
+    if (slotIndex === 0 && player.position !== 'Вратарь') {
+        alert('В эту позицию можно добавить только вратаря!');
+        return;
+    }
+
+    // Вратаря нельзя ставить в полевой слот
+    if (slotIndex !== 0 && player.position === 'Вратарь') {
+        alert('Вратарь может быть только в позиции вратаря.');
+        return;
+    }
+
+    // Добавляем игрока в слот
+    game.lineup[slotIndex] = player;
+    saveData();
+    renderLineup();
+    renderReadyPlayersCompact();
 }
 
 // Обновление счетчика готовых игроков
