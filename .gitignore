@@ -33,3 +33,15 @@ npm-debug.log*
 # Temporary files
 *~
 .cache/
+
+# Development files (not needed for GitHub Pages)
+https-server.py
+start-server.sh
+server.key
+server.crt
+hockey-lineup-backup-*.json
+
+# Documentation (optional - can be included)
+# PWA-FIX.md
+# PWA-SETUP.md
+# QUICK-FIX.md

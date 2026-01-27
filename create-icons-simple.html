@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание иконок PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1a1a2e; }
+        button {
+            padding: 15px 30px;
+            margin: 10px 5px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover { background: #d63954; }
+        .preview {
+            text-align: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏒 Создание иконок для PWA</h1>
+        <p>Нажмите кнопки ниже, чтобы создать и скачать иконки. Сохраните их в папку проекта.</p>
+        
+        <div class="preview">
+            <h3>192x192</h3>
+            <canvas id="canvas192" width="192" height="192"></canvas>
+            <br>
+            <button onclick="downloadIcon(192)">📥 Скачать icon-192.png</button>
+        </div>
+        
+        <div class="preview">
+            <h3>512x512</h3>
+            <canvas id="canvas512" width="512" height="512"></canvas>
+            <br>
+            <button onclick="downloadIcon(512)">📥 Скачать icon-512.png</button>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <strong>Важно:</strong> После скачивания иконок:
+            <ol>
+                <li>Сохраните файлы <code>icon-192.png</code> и <code>icon-512.png</code> в папку проекта</li>
+                <li>Обновите страницу приложения</li>
+                <li>Попробуйте установить PWA снова</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Белый фон
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Бронзовый/металлический градиент
+            const bronzeGradient = ctx.createLinearGradient(0, 0, size, size);
+            bronzeGradient.addColorStop(0, '#e6c89a'); // Светлый бронзовый
+            bronzeGradient.addColorStop(0.2, '#d4a574'); 
+            bronzeGradient.addColorStop(0.5, '#b8864a'); // Средний
+            bronzeGradient.addColorStop(0.8, '#8b6914'); // Темный
+            bronzeGradient.addColorStop(1, '#cd853f'); // Медный
+            
+            const centerX = size / 2;
+            const playerTop = size * 0.08;
+            const textTop = size * 0.68;
+            
+            // === ХОККЕИСТ (верхняя часть эмблемы) ===
+            
+            // Шлем с маской
+            ctx.fillStyle = bronzeGradient;
+            ctx.beginPath();
+            // Верхняя часть шлема (округлая)
+            ctx.arc(centerX, playerTop + size * 0.1, size * 0.14, Math.PI, 0, false);
+            // Боковые стороны
+            ctx.lineTo(centerX + size * 0.14, playerTop + size * 0.2);
+            ctx.lineTo(centerX - size * 0.14, playerTop + size * 0.2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Маска шлема (сетка)
+            ctx.strokeStyle = '#8b6914';
+            ctx.lineWidth = Math.max(1, size / 200);
+            for (let i = -3; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(centerX + i * size * 0.025, playerTop + size * 0.1);
+                ctx.lineTo(centerX + i * size * 0.025, playerTop + size * 0.2);
+                ctx.stroke();
+            }
+            
+            // Лицо под маской (упрощенное)
+            ctx.fillStyle = '#f4d4a3';
+            ctx.beginPath();
+            ctx.arc(centerX, playerTop + size * 0.15, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Тело/грудь (текстурированная область)
+            ctx.fillStyle = '#8b6914';
+            ctx.beginPath();
+            ctx.ellipse(centerX, playerTop + size * 0.32, size * 0.2, size * 0.18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Текстура на груди (зернистость)
+            ctx.fillStyle = '#b8864a';
+            const textureSize = size * 0.006;
+            for (let i = 0; i < 30; i++) {
+                const angle = (i / 30) * Math.PI * 2;
+                const radius = (Math.random() * 0.5 + 0.3) * size * 0.18;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = playerTop + size * 0.32 + Math.sin(angle) * radius;
+                ctx.beginPath();
+                ctx.arc(x, y, textureSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Плечи и руки
+            ctx.strokeStyle = '#d4a574';
+            ctx.fillStyle = '#d4a574';
+            ctx.lineWidth = Math.max(2, size / 50);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Левое плечо и рука
+            ctx.beginPath();
+            ctx.moveTo(centerX - size * 0.15, playerTop + size * 0.25);
+            ctx.lineTo(centerX - size * 0.2, playerTop + size * 0.4);
+            ctx.stroke();
+            
+            // Правое плечо и рука
+            ctx.beginPath();
+            ctx.moveTo(centerX + size * 0.15, playerTop + size * 0.25);
+            ctx.lineTo(centerX + size * 0.18, playerTop + size * 0.38);
+            ctx.stroke();
+            
+            // Клюшка (горизонтально через тело)
+            ctx.beginPath();
+            ctx.moveTo(centerX - size * 0.28, playerTop + size * 0.35);
+            ctx.lineTo(centerX + size * 0.32, playerTop + size * 0.33);
+            ctx.lineTo(centerX + size * 0.38, playerTop + size * 0.38);
+            ctx.stroke();
+            
+            // Крюк клюшки
+            ctx.beginPath();
+            ctx.moveTo(centerX + size * 0.32, playerTop + size * 0.33);
+            ctx.quadraticCurveTo(centerX + size * 0.35, playerTop + size * 0.42, centerX + size * 0.38, playerTop + size * 0.45);
+            ctx.stroke();
+            
+            // === ТЕКСТ "CheesBulls" (нижняя часть эмблемы) ===
+            const fontSize = Math.max(20, size / 7);
+            ctx.font = `bold ${fontSize}px 'Arial Black', Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Тень текста (для 3D эффекта)
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = size * 0.01;
+            ctx.shadowOffsetX = size * 0.005;
+            ctx.shadowOffsetY = size * 0.01;
+            
+            // Обводка текста
+            ctx.strokeStyle = '#6b5510';
+            ctx.lineWidth = Math.max(1.5, size / 80);
+            ctx.strokeText('CheesBulls', centerX, textTop);
+            
+            // Основной текст с градиентом
+            ctx.fillStyle = bronzeGradient;
+            ctx.fillText('CheesBulls', centerX, textTop);
+            
+            // Верхний блик на тексте (металлический эффект)
+            ctx.shadowColor = 'transparent';
+            const highlightGradient = ctx.createLinearGradient(0, textTop - fontSize/2, 0, textTop);
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+            highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+            highlightGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = highlightGradient;
+            ctx.fillRect(centerX - size * 0.35, textTop - fontSize/2, size * 0.7, fontSize/2);
+            
+            // Общая тень эмблемы
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = size * 0.02;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = size * 0.015;
+        }
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        // Рисуем иконки при загрузке
+        window.onload = function() {
+            drawIcon(document.getElementById('canvas192'), 192);
+            drawIcon(document.getElementById('canvas512'), 512);
+        };
+    </script>
+</body>
+</html>

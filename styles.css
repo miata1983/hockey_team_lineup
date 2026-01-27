@@ -23,6 +23,7 @@ body {
     color: var(--text-color);
     min-height: 100vh;
     padding: 20px;
+    padding-bottom: 100px; /* Место для баннера PWA */
 }
 
 .container {
@@ -684,6 +685,8 @@ header h1 {
     border: 2px solid transparent;
     flex-shrink: 0;
     margin-bottom: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .player-card:hover {
@@ -707,6 +710,8 @@ header h1 {
     gap: 8px;
     flex: 1;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .player-number {
@@ -746,6 +751,7 @@ header h1 {
     display: flex;
     gap: 4px;
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .status-btn {
@@ -1029,6 +1035,182 @@ header h1 {
 
     .goalie-slot {
         max-width: 100%;
+    }
+
+    /* Исправление перекрытия кнопок на мобильных */
+    .player-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .player-info {
+        width: 100%;
+        max-width: 100%;
+        order: 1;
+    }
+
+    .player-status-buttons {
+        width: 100%;
+        justify-content: space-between;
+        order: 2;
+        margin-top: 4px;
+    }
+
+    .player-actions {
+        width: 100%;
+        justify-content: flex-end;
+        order: 3;
+        margin-top: 4px;
+        margin-left: 0;
+    }
+
+    .status-btn {
+        flex: 1;
+        padding: 6px 4px;
+        font-size: 0.7em;
+        min-width: 0;
+    }
+
+    .player-details h3 {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        word-break: break-word;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .header-actions .btn {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+/* Баннер установки PWA */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border-top: 3px solid var(--highlight-color);
+    padding: 12px 16px;
+    z-index: 10000;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.pwa-install-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.pwa-install-icon {
+    font-size: 2em;
+    flex-shrink: 0;
+}
+
+.pwa-install-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pwa-install-text strong {
+    color: var(--text-color);
+    font-size: 1em;
+}
+
+.pwa-install-text span {
+    color: #aaa;
+    font-size: 0.85em;
+}
+
+.pwa-install-btn {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    white-space: nowrap;
+}
+
+.pwa-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.pwa-dismiss-btn:hover {
+    background: var(--highlight-color);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 120px; /* Больше места для баннера на мобильных */
+    }
+
+    .pwa-install-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pwa-install-icon {
+        font-size: 1.5em;
+    }
+
+    .pwa-install-text {
+        width: 100%;
+        order: 2;
+        flex: 1 1 100%;
+    }
+
+    .pwa-install-text strong {
+        font-size: 0.9em;
+    }
+
+    .pwa-install-text span {
+        font-size: 0.75em;
+    }
+
+    .pwa-install-btn {
+        order: 3;
+        flex: 1;
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+
+    .pwa-dismiss-btn {
+        order: 1;
+        width: 24px;
+        height: 24px;
+        font-size: 1.2em;
     }
 }
 

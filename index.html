@@ -2,20 +2,44 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Формирование состава на хоккейную игру">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Приложение для формирования состава на хоккейную игру">
     <meta name="theme-color" content="#1a1a2e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Хоккей Состав">
     <title>Хоккейный Состав</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
+    <!-- Баннер установки PWA -->
+    <div id="pwaInstallBanner" class="pwa-install-banner" style="display: none;">
+        <div class="pwa-install-content">
+            <span class="pwa-install-icon">📱</span>
+            <div class="pwa-install-text">
+                <strong>Установить приложение</strong>
+                <span>Добавить на главный экран для быстрого доступа</span>
+            </div>
+            <button id="pwaInstallBtn" class="btn btn-primary pwa-install-btn">Установить</button>
+            <button id="pwaDismissBtn" class="pwa-dismiss-btn" title="Закрыть">×</button>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>🏒 Формирование состава</h1>
             <div class="header-actions">
                 <button id="addPlayerBtn" class="btn btn-primary">+ Добавить игрока</button>
+                <button id="exportDataBtn" class="btn btn-secondary" title="Экспортировать данные в JSON">📥 Экспорт данных</button>
+                <button id="importDataBtn" class="btn btn-secondary" title="Импортировать данные из JSON">📤 Импорт данных</button>
+                <button id="copyTeamCodeBtn" class="btn btn-secondary" title="Скопировать список команды в код">📋 Код команды</button>
+                <button id="showPWAInstallBtn" class="btn btn-secondary" title="Показать установку приложения" style="display: none;">📱 Установить приложение</button>
+                <button id="pwaCheckBtn" class="btn btn-secondary" title="Диагностика PWA" onclick="window.location.href='pwa-check.html'">🔍 Диагностика PWA</button>
                 <button id="saveAsJpegBtn" class="btn btn-success" style="display: none;">💾 Сохранить как JPEG</button>
             </div>
         </header>
@@ -179,6 +203,23 @@
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="closeModal('deletePlayerModal')">Отмена</button>
                 <button id="confirmDeletePlayerBtn" class="btn btn-primary" style="background: var(--highlight-color);">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для импорта данных -->
+    <div id="importDataModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="importDataModal">&times;</span>
+            <h2>Импорт данных</h2>
+            <p style="margin-bottom: 15px; color: var(--warning-color);">⚠️ Внимание: Импорт данных заменит все текущие данные (команду и игры). Убедитесь, что вы экспортировали текущие данные перед импортом!</p>
+            <div class="form-group">
+                <label for="importFileInput">Выберите JSON файл:</label>
+                <input type="file" id="importFileInput" accept=".json" style="margin-top: 10px;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('importDataModal')">Отмена</button>
+                <button id="confirmImportBtn" class="btn btn-primary">Импортировать</button>
             </div>
         </div>
     </div>

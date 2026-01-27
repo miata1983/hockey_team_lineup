@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диагностика PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1a1a2e; }
+        .check-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+        }
+        .check-item.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .check-item.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .check-item.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .check-item h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .check-item p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #d63954; }
+        .actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Диагностика PWA</h1>
+        <p>Эта страница проверяет все требования для установки PWA.</p>
+        
+        <div id="checks"></div>
+        
+        <div class="actions">
+            <h2>Действия</h2>
+            <button onclick="location.reload()">🔄 Обновить проверку</button>
+            <button onclick="window.location.href='create-icons-simple.html'">📱 Создать иконки</button>
+            <button onclick="window.location.href='index.html'">🏠 Вернуться к приложению</button>
+        </div>
+    </div>
+
+    <script>
+        const checks = [];
+        
+        // Проверка 1: HTTPS или localhost
+        function checkHTTPS() {
+            const isSecure = location.protocol === 'https:' || 
+                           location.hostname === 'localhost' || 
+                           location.hostname === '127.0.0.1' ||
+                           location.hostname === '';
+            const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
+            
+            if (isSecure) {
+                checks.push({
+                    title: 'HTTPS или localhost',
+                    status: 'success',
+                    message: `✅ Используется безопасное соединение: ${location.protocol}//${location.hostname}`
+                });
+            } else if (isLocalIP) {
+                checks.push({
+                    title: 'HTTPS или localhost',
+                    status: 'error',
+                    message: `❌ Используется локальный IP (${location.hostname}). Для PWA нужно использовать localhost или HTTPS.`,
+                    solution: `💡 Решение: Запустите сервер на localhost:\n` +
+                             `   python3 -m http.server 8000\n` +
+                             `   Затем откройте: http://localhost:8000`
+                });
+            } else {
+                checks.push({
+                    title: 'HTTPS или localhost',
+                    status: 'error',
+                    message: `❌ Требуется HTTPS или localhost. Текущий: ${location.protocol}//${location.hostname}`
+                });
+            }
+        }
+        
+        // Проверка 2: Manifest.json
+        async function checkManifest() {
+            try {
+                const response = await fetch('./manifest.json');
+                if (!response.ok) throw new Error('Не найден');
+                
+                const manifest = await response.json();
+                const required = ['name', 'short_name', 'start_url', 'display', 'icons'];
+                const missing = required.filter(key => !manifest[key]);
+                
+                if (missing.length > 0) {
+                    checks.push({
+                        title: 'Manifest.json',
+                        status: 'error',
+                        message: `❌ Отсутствуют обязательные поля: ${missing.join(', ')}`
+                    });
+                } else {
+                    checks.push({
+                        title: 'Manifest.json',
+                        status: 'success',
+                        message: `✅ Manifest загружен. Имя: "${manifest.name}", Display: ${manifest.display}`
+                    });
+                    
+                    // Проверка иконок в manifest
+                    if (manifest.icons && manifest.icons.length > 0) {
+                        checks.push({
+                            title: 'Иконки в manifest',
+                            status: 'success',
+                            message: `✅ Найдено ${manifest.icons.length} иконок в manifest`
+                        });
+                    } else {
+                        checks.push({
+                            title: 'Иконки в manifest',
+                            status: 'error',
+                            message: '❌ Нет иконок в manifest.json'
+                        });
+                    }
+                }
+            } catch (error) {
+                checks.push({
+                    title: 'Manifest.json',
+                    status: 'error',
+                    message: `❌ Ошибка загрузки manifest.json: ${error.message}`
+                });
+            }
+        }
+        
+        // Проверка 3: Иконки
+        async function checkIcons() {
+            const icons = ['icon-192.png', 'icon-512.png'];
+            let found = 0;
+            let missing = [];
+            
+            for (const icon of icons) {
+                try {
+                    const response = await fetch(`./${icon}`, { method: 'HEAD' });
+                    if (response.ok) {
+                        found++;
+                    } else {
+                        missing.push(icon);
+                    }
+                } catch (error) {
+                    missing.push(icon);
+                }
+            }
+            
+            if (found === icons.length) {
+                checks.push({
+                    title: 'Иконки файлы',
+                    status: 'success',
+                    message: `✅ Все иконки найдены (${found}/${icons.length})`
+                });
+            } else {
+                checks.push({
+                    title: 'Иконки файлы',
+                    status: 'error',
+                    message: `❌ Отсутствуют иконки: ${missing.join(', ')}. Создайте их с помощью create-icons-simple.html`
+                });
+            }
+        }
+        
+        // Проверка 4: Service Worker
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                checks.push({
+                    title: 'Service Worker поддержка',
+                    status: 'success',
+                    message: '✅ Браузер поддерживает Service Worker'
+                });
+                
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        checks.push({
+                            title: 'Service Worker регистрация',
+                            status: 'success',
+                            message: `✅ Service Worker зарегистрирован. Scope: ${registration.scope}`
+                        });
+                        
+                        if (registration.active) {
+                            checks.push({
+                                title: 'Service Worker статус',
+                                status: 'success',
+                                message: `✅ Service Worker активен и работает`
+                            });
+                        } else if (registration.installing) {
+                            checks.push({
+                                title: 'Service Worker статус',
+                                status: 'warning',
+                                message: `⚠️ Service Worker устанавливается...`
+                            });
+                        } else if (registration.waiting) {
+                            checks.push({
+                                title: 'Service Worker статус',
+                                status: 'warning',
+                                message: `⚠️ Service Worker ожидает активации`
+                            });
+                        }
+                    } else {
+                        // Проверяем, может ли быть зарегистрирован
+                        try {
+                            const testReg = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+                            checks.push({
+                                title: 'Service Worker регистрация',
+                                status: 'warning',
+                                message: '⚠️ Service Worker не был зарегистрирован, но может быть зарегистрирован. Проверьте app.js'
+                            });
+                        } catch (regError) {
+                            checks.push({
+                                title: 'Service Worker регистрация',
+                                status: 'error',
+                                message: `❌ Service Worker не зарегистрирован. Ошибка: ${regError.message}`
+                            });
+                        }
+                    }
+                } catch (error) {
+                    checks.push({
+                        title: 'Service Worker',
+                        status: 'error',
+                        message: `❌ Ошибка проверки Service Worker: ${error.message}`
+                    });
+                }
+            } else {
+                checks.push({
+                    title: 'Service Worker поддержка',
+                    status: 'error',
+                    message: '❌ Service Worker не поддерживается в этом браузере. Попробуйте Chrome, Edge или Firefox'
+                });
+            }
+        }
+        
+        // Проверка 5: beforeinstallprompt
+        function checkInstallPrompt() {
+            let deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                deferredPrompt = e;
+            });
+            
+            setTimeout(() => {
+                if (deferredPrompt) {
+                    checks.push({
+                        title: 'Установка PWA',
+                        status: 'success',
+                        message: '✅ Браузер готов к установке PWA (beforeinstallprompt сработал)'
+                    });
+                } else {
+                    checks.push({
+                        title: 'Установка PWA',
+                        status: 'warning',
+                        message: '⚠️ beforeinstallprompt не сработал. Возможные причины: уже установлено, не все требования выполнены, или браузер не поддерживает'
+                    });
+                }
+            }, 2000);
+        }
+        
+        // Проверка 6: Уже установлено?
+        function checkInstalled() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isIOSStandalone = window.navigator.standalone === true;
+            
+            if (isStandalone || isIOSStandalone) {
+                checks.push({
+                    title: 'Статус установки',
+                    status: 'success',
+                    message: '✅ Приложение уже установлено как PWA!'
+                });
+            } else {
+                checks.push({
+                    title: 'Статус установки',
+                    status: 'warning',
+                    message: 'ℹ️ Приложение не установлено. Используйте кнопку установки в приложении'
+                });
+            }
+        }
+        
+        // Отображение результатов
+        function displayChecks() {
+            const container = document.getElementById('checks');
+            container.innerHTML = '';
+            
+            checks.forEach(check => {
+                const div = document.createElement('div');
+                div.className = `check-item ${check.status}`;
+                let html = `
+                    <h3>${check.title}</h3>
+                    <p>${check.message}</p>
+                `;
+                if (check.solution) {
+                    html += `<p style="margin-top: 10px; font-weight: bold; white-space: pre-line;">${check.solution}</p>`;
+                }
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+        }
+        
+        // Запуск всех проверок
+        async function runChecks() {
+            checkHTTPS();
+            checkInstalled();
+            await checkManifest();
+            await checkIcons();
+            await checkServiceWorker();
+            checkInstallPrompt();
+            
+            setTimeout(displayChecks, 500);
+        }
+        
+        // Запуск при загрузке
+        runChecks();
+    </script>
+</body>
+</html>

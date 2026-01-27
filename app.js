@@ -2,6 +2,7 @@
 let team = [];
 let games = [];
 let currentGameId = null;
+let deferredPrompt = null; // Для установки PWA
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,10 +13,71 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Регистрация service worker для PWA
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Service Worker зарегистрирован'))
-            .catch(err => console.log('Ошибка регистрации Service Worker:', err));
+        // Проверяем, что мы на HTTPS или localhost
+        const isSecure = location.protocol === 'https:' || 
+                        location.hostname === 'localhost' || 
+                        location.hostname === '127.0.0.1' ||
+                        location.hostname === '';
+        
+        if (!isSecure) {
+            console.warn('⚠️ Service Worker требует HTTPS или localhost. Текущий протокол:', location.protocol);
+        }
+        
+        navigator.serviceWorker.register('./service-worker.js', { 
+            scope: './',
+            updateViaCache: 'none'
+        })
+            .then(reg => {
+                console.log('✅ Service Worker зарегистрирован:', reg.scope);
+                
+                // Проверяем наличие иконок
+                fetch('./icon-192.png').then(r => {
+                    if (r.ok) {
+                        console.log('✅ Иконка icon-192.png найдена');
+                    } else {
+                        console.error('❌ Иконка icon-192.png не найдена! Создайте её с помощью create-icons-simple.html');
+                    }
+                }).catch(() => {
+                    console.error('❌ Иконка icon-192.png не найдена! Создайте её с помощью create-icons-simple.html');
+                });
+                
+                fetch('./icon-512.png').then(r => {
+                    if (r.ok) {
+                        console.log('✅ Иконка icon-512.png найдена');
+                    } else {
+                        console.error('❌ Иконка icon-512.png не найдена! Создайте её с помощью create-icons-simple.html');
+                    }
+                }).catch(() => {
+                    console.error('❌ Иконка icon-512.png не найдена! Создайте её с помощью create-icons-simple.html');
+                });
+                
+                // Проверяем обновления Service Worker
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('🔄 Новая версия Service Worker доступна. Перезагрузите страницу.');
+                        }
+                    });
+                });
+            })
+            .catch(err => {
+                console.error('❌ Ошибка регистрации Service Worker:', err);
+                console.error('⚠️ PWA может не работать без Service Worker');
+                console.error('💡 Откройте pwa-check.html для диагностики');
+            });
+        
+        // Обработка обновлений
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('🔄 Service Worker обновлен, перезагружаем страницу...');
+            window.location.reload();
+        });
+    } else {
+        console.warn('⚠️ Service Worker не поддерживается в этом браузере');
     }
+    
+    // Инициализация PWA установки
+    initPWAInstall();
 });
 
 // Загрузка данных из localStorage
@@ -244,6 +306,53 @@ function initializeEventListeners() {
     // Кнопка сохранения в JPEG
     document.getElementById('saveAsJpegBtn').addEventListener('click', () => {
         saveAsJpeg();
+    });
+
+    // Кнопка экспорта данных
+    document.getElementById('exportDataBtn').addEventListener('click', () => {
+        exportData();
+    });
+
+    // Кнопка импорта данных
+    document.getElementById('importDataBtn').addEventListener('click', () => {
+        document.getElementById('importDataModal').style.display = 'block';
+    });
+
+    // Кнопка копирования кода команды
+    document.getElementById('copyTeamCodeBtn').addEventListener('click', () => {
+        copyTeamCode();
+    });
+
+    // Кнопка установки PWA
+    const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+    if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener('click', handlePWAInstall);
+    }
+
+    // Кнопка закрытия баннера PWA
+    const pwaDismissBtn = document.getElementById('pwaDismissBtn');
+    if (pwaDismissBtn) {
+        pwaDismissBtn.addEventListener('click', () => {
+            dismissPWAInstallBanner();
+        });
+    }
+
+    // Кнопка показа установки PWA
+    const showPWAInstallBtn = document.getElementById('showPWAInstallBtn');
+    if (showPWAInstallBtn) {
+        showPWAInstallBtn.addEventListener('click', () => {
+            showPWAInstallManually();
+        });
+    }
+
+    // Подтверждение импорта данных
+    document.getElementById('confirmImportBtn').addEventListener('click', () => {
+        const fileInput = document.getElementById('importFileInput');
+        if (fileInput.files.length === 0) {
+            alert('Выберите файл для импорта');
+            return;
+        }
+        importData(fileInput.files[0]);
     });
 
     // Подтверждение удаления игры
@@ -1421,4 +1530,273 @@ function generateExportHTML(game) {
             </div>
         </div>
     `;
+}
+
+// Экспорт данных в JSON файл
+function exportData() {
+    const data = {
+        team: team,
+        games: games,
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `hockey-lineup-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    alert('Данные успешно экспортированы! Файл сохранен в папку загрузок.');
+}
+
+// Импорт данных из JSON файла
+function importData(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            // Проверяем структуру данных
+            if (!data.team || !Array.isArray(data.team)) {
+                throw new Error('Неверный формат файла: отсутствует массив команды');
+            }
+            
+            if (!data.games || !Array.isArray(data.games)) {
+                throw new Error('Неверный формат файла: отсутствует массив игр');
+            }
+            
+            // Подтверждение импорта
+            const confirmMessage = `Вы уверены, что хотите импортировать данные?\n\n` +
+                `Команда: ${data.team.length} игроков\n` +
+                `Игры: ${data.games.length} игр\n\n` +
+                `⚠️ Все текущие данные будут заменены!`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Импортируем данные
+            team = data.team;
+            games = data.games;
+            
+            // Сохраняем в localStorage
+            saveData();
+            
+            // Обновляем интерфейс
+            renderTeam();
+            renderGamesList();
+            
+            // Сбрасываем текущую игру
+            currentGameId = null;
+            document.getElementById('gamesSection').style.display = 'block';
+            document.getElementById('gameWorkSection').style.display = 'none';
+            document.getElementById('saveAsJpegBtn').style.display = 'none';
+            
+            closeModal('importDataModal');
+            
+            // Очищаем input файла
+            document.getElementById('importFileInput').value = '';
+            
+            alert('Данные успешно импортированы!');
+            
+        } catch (error) {
+            console.error('Ошибка импорта:', error);
+            alert('Ошибка при импорте данных: ' + error.message);
+        }
+    };
+    
+    reader.onerror = () => {
+        alert('Ошибка при чтении файла');
+    };
+    
+    reader.readAsText(file);
+}
+
+// Копирование списка команды в буфер обмена в формате кода
+function copyTeamCode() {
+    if (team.length === 0) {
+        alert('Список команды пуст. Добавьте игроков перед копированием.');
+        return;
+    }
+    
+    // Формируем код в формате JavaScript массива
+    const codeLines = team.map(player => {
+        return `            { id: ${player.id}, name: '${player.name.replace(/'/g, "\\'")}', number: ${player.number || 0}, position: '${player.position}' }`;
+    });
+    
+    const code = `        team = [\n${codeLines.join(',\n')}\n        ];`;
+    
+    // Копируем в буфер обмена
+    navigator.clipboard.writeText(code).then(() => {
+        alert(`Код списка команды (${team.length} игроков) скопирован в буфер обмена!\n\n` +
+              `Вы можете вставить его в функцию loadData() в файле app.js, заменив начальные данные.`);
+    }).catch(err => {
+        // Fallback для старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert(`Код списка команды (${team.length} игроков) скопирован в буфер обмена!\n\n` +
+                  `Вы можете вставить его в функцию loadData() в файле app.js, заменив начальные данные.`);
+        } catch (err) {
+            alert('Не удалось скопировать. Показываю код в консоли.');
+            console.log('Код для вставки в app.js:\n', code);
+        }
+        document.body.removeChild(textarea);
+    });
+}
+
+// Инициализация PWA установки
+function initPWAInstall() {
+    // Проверяем, установлено ли уже приложение
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    
+    // Показываем/скрываем кнопку установки в интерфейсе
+    updatePWAInstallButton(!isInstalled);
+
+    if (isInstalled) {
+        return; // Уже установлено
+    }
+
+    // Проверяем, не был ли баннер уже отклонен
+    const dismissed = localStorage.getItem('pwaInstallDismissed');
+    if (dismissed) {
+        const dismissTime = parseInt(dismissed);
+        const daysSinceDismiss = (Date.now() - dismissTime) / (1000 * 60 * 60 * 24);
+        // Показываем снова через 7 дней
+        if (daysSinceDismiss < 7) {
+            return;
+        }
+    }
+
+    // Обработчик события beforeinstallprompt (для Android Chrome, Edge и др.)
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Предотвращаем автоматический показ баннера браузера
+        e.preventDefault();
+        deferredPrompt = e;
+        // Обновляем кнопку в интерфейсе
+        updatePWAInstallButton(true);
+        // Показываем баннер только если не был отклонен недавно
+        const dismissed = localStorage.getItem('pwaInstallDismissed');
+        if (!dismissed) {
+            showPWAInstallBanner(false);
+        }
+    });
+
+    // Для iOS и других браузеров без beforeinstallprompt
+    setTimeout(() => {
+        if (deferredPrompt === null && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+                showPWAInstallBanner(true);
+            } else {
+                // Для других браузеров тоже показываем инструкции
+                showPWAInstallBanner(true);
+            }
+        }
+    }, 3000);
+}
+
+// Обновление видимости кнопки установки PWA в интерфейсе
+function updatePWAInstallButton(show) {
+    const btn = document.getElementById('showPWAInstallBtn');
+    if (btn) {
+        btn.style.display = show ? 'inline-block' : 'none';
+    }
+}
+
+// Ручной вызов баннера установки PWA
+function showPWAInstallManually() {
+    // Сбрасываем флаг отклонения
+    localStorage.removeItem('pwaInstallDismissed');
+    
+    // Проверяем, есть ли deferredPrompt
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (deferredPrompt) {
+        // Если есть deferredPrompt, показываем баннер с кнопкой установки
+        showPWAInstallBanner(false);
+    } else {
+        // Иначе показываем инструкции
+        showPWAInstallBanner(true);
+    }
+}
+
+// Показать баннер установки PWA
+function showPWAInstallBanner(isIOS = false) {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (!banner) return;
+
+    const installBtn = document.getElementById('pwaInstallBtn');
+    
+    if (isIOS || !deferredPrompt) {
+        // Для iOS или если нет deferredPrompt показываем инструкции
+        if (installBtn) {
+            installBtn.textContent = 'Инструкция';
+        }
+    } else {
+        // Для Android с deferredPrompt
+        if (installBtn) {
+            installBtn.textContent = 'Установить';
+        }
+    }
+
+    banner.style.display = 'block';
+}
+
+// Обработка установки PWA
+function handlePWAInstall() {
+    // Проверяем, есть ли deferredPrompt
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('Пользователь принял установку PWA');
+                // Скрываем кнопку после установки
+                updatePWAInstallButton(false);
+            } else {
+                console.log('Пользователь отклонил установку PWA');
+            }
+            deferredPrompt = null;
+            dismissPWAInstallBanner();
+        });
+    } else {
+        // Для браузеров без beforeinstallprompt (например, iOS Safari)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+            alert('Для установки на iOS:\n\n' +
+                  '1. Нажмите кнопку "Поделиться" (квадрат со стрелкой вверх) внизу экрана\n' +
+                  '2. Прокрутите вниз и выберите "На экран «Домой»"\n' +
+                  '3. Нажмите "Добавить"');
+        } else {
+            alert('Для установки приложения:\n\n' +
+                  'Chrome/Edge: Нажмите на меню (три точки) → "Установить приложение"\n' +
+                  'Firefox: Меню → "Установить"\n' +
+                  'Safari (macOS): Файл → "Добавить на экран «Домой»"');
+        }
+        dismissPWAInstallBanner();
+    }
+}
+
+// Закрыть баннер установки PWA
+function dismissPWAInstallBanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) {
+        banner.style.display = 'none';
+        // Сохраняем время отклонения
+        localStorage.setItem('pwaInstallDismissed', Date.now().toString());
+        // Кнопка в интерфейсе остается видимой для повторного вызова
+    }
 }
