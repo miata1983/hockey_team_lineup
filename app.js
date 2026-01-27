@@ -154,6 +154,7 @@ function createNewGame() {
         title: `Игра ${games.length + 1}`,
         date: new Date().toISOString().split('T')[0],
         time: '',
+        weekday: '',
         stadium: '',
         score: '',
         playerStatuses: {}, // Статусы игроков: 'ready', 'not-ready' (Пас), 'doubtful' (Под ?), 'survey' (Опрос), null
@@ -186,12 +187,17 @@ function selectGame(gameId) {
     
     // Инициализируем новые поля если их нет
     if (game.time === undefined) game.time = '';
+    if (game.weekday === undefined) game.weekday = '';
     if (game.stadium === undefined) game.stadium = '';
     
     // Заполняем информацию об игре
     document.getElementById('gameTitle').value = game.title;
     document.getElementById('gameDate').value = game.date;
     document.getElementById('gameTime').value = game.time || '';
+    const weekdayEl = document.getElementById('gameWeekday');
+    if (weekdayEl) {
+        weekdayEl.value = game.weekday || '';
+    }
     document.getElementById('gameStadium').value = game.stadium || '';
     document.getElementById('gameScore').value = game.score;
     
@@ -316,6 +322,10 @@ function initializeEventListeners() {
     document.getElementById('gameTitle').addEventListener('change', saveGameInfo);
     document.getElementById('gameDate').addEventListener('change', saveGameInfo);
     document.getElementById('gameTime').addEventListener('change', saveGameInfo);
+    const gameWeekdayEl = document.getElementById('gameWeekday');
+    if (gameWeekdayEl) {
+        gameWeekdayEl.addEventListener('change', saveGameInfo);
+    }
     document.getElementById('gameStadium').addEventListener('change', saveGameInfo);
     document.getElementById('gameScore').addEventListener('change', saveGameInfo);
 
@@ -434,6 +444,8 @@ function saveGameInfo() {
     game.title = document.getElementById('gameTitle').value || `Игра ${games.indexOf(game) + 1}`;
     game.date = document.getElementById('gameDate').value || new Date().toISOString().split('T')[0];
     game.time = document.getElementById('gameTime').value;
+    const weekdayEl = document.getElementById('gameWeekday');
+    game.weekday = weekdayEl ? weekdayEl.value : '';
     game.stadium = document.getElementById('gameStadium').value;
     game.score = document.getElementById('gameScore').value;
     
@@ -581,18 +593,18 @@ function renderTeam() {
                 </div>
             </div>
             <div class="player-status-buttons">
-                <button class="status-btn status-ready ${status === 'ready' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'ready')" 
-                        title="Готов">Готов</button>
-                <button class="status-btn status-not-ready ${status === 'not-ready' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'not-ready')" 
-                        title="Пас">Пас</button>
-                <button class="status-btn status-doubtful ${status === 'doubtful' ? 'active' : ''}" 
-                        onclick="setPlayerStatus(${player.id}, 'doubtful')" 
-                        title="Под вопросом">Под ?</button>
                 <button class="status-btn status-survey ${status === 'survey' ? 'active' : ''}" 
                         onclick="setPlayerStatus(${player.id}, 'survey')" 
                         title="Опрос">Опрос</button>
+                <button class="status-btn status-ready ${status === 'ready' ? 'active' : ''}" 
+                        onclick="setPlayerStatus(${player.id}, 'ready')" 
+                        title="Готов">Готов</button>
+                <button class="status-btn status-doubtful ${status === 'doubtful' ? 'active' : ''}" 
+                        onclick="setPlayerStatus(${player.id}, 'doubtful')" 
+                        title="Под вопросом">Под ?</button>
+                <button class="status-btn status-not-ready ${status === 'not-ready' ? 'active' : ''}" 
+                        onclick="setPlayerStatus(${player.id}, 'not-ready')" 
+                        title="Пас">Пас</button>
             </div>
             <div class="player-actions">
                 <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
@@ -1811,31 +1823,41 @@ function copyTeamText() {
 
     if (groups.ready.length) {
         lines.push('ГОТОВЫ:');
-        lines.push(...groups.ready);
+        groups.ready.forEach((line, index) => {
+            lines.push(`${index + 1}. ${line}`);
+        });
         lines.push('');
     }
 
     if (groups.survey.length) {
         lines.push('ОПРОС:');
-        lines.push(...groups.survey);
+        groups.survey.forEach((line, index) => {
+            lines.push(`${index + 1}. ${line}`);
+        });
         lines.push('');
     }
 
     if (groups.doubtful.length) {
         lines.push('ПОД ?:');
-        lines.push(...groups.doubtful);
+        groups.doubtful.forEach((line, index) => {
+            lines.push(`${index + 1}. ${line}`);
+        });
         lines.push('');
     }
 
     if (groups['not-ready'].length) {
         lines.push('ПАС:');
-        lines.push(...groups['not-ready']);
+        groups['not-ready'].forEach((line, index) => {
+            lines.push(`${index + 1}. ${line}`);
+        });
         lines.push('');
     }
 
     if (groups.none.length) {
         lines.push('БЕЗ СТАТУСА:');
-        lines.push(...groups.none);
+        groups.none.forEach((line, index) => {
+            lines.push(`${index + 1}. ${line}`);
+        });
         lines.push('');
     }
 

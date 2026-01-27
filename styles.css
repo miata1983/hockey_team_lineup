@@ -469,7 +469,18 @@ header h1 {
 }
 
 .game-time-input {
-    width: 100px;
+    width: 90px;
+}
+
+.game-weekday-select {
+    width: 90px;
+    padding: 8px;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 0.9em;
+    transition: all 0.3s ease;
 }
 
 .game-stadium-input {
@@ -483,6 +494,7 @@ header h1 {
 
 .game-date-input:focus,
 .game-time-input:focus,
+.game-weekday-select:focus,
 .game-stadium-input:focus,
 .game-score-input:focus {
     outline: none;
