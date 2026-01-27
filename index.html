@@ -81,11 +81,16 @@
                             </select>
                             <input type="text" id="gameStadium" class="game-stadium-input" placeholder="Стадион">
                             <input type="text" id="gameScore" class="game-score-input" placeholder="Счет">
-                            <input type="number" id="gamePoints" class="game-points-input" placeholder="Очки" min="0" max="2" step="1">
-                            <select id="gameColor" class="game-color-select" title="Цвет формы">
-                                <option value="">Цвет</option>
-                                <option value="Красный">Красный</option>
-                                <option value="Белый">Белый</option>
+                            <select id="gamePoints" class="game-points-select" title="Очки">
+                                <option value="">Очки</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                            <select id="gameColor" class="game-color-select" title="Форма">
+                                <option value="">Форма</option>
+                                <option value="Красная">Красная</option>
+                                <option value="Белая">Белая</option>
                             </select>
                             <button id="backToGamesBtn" class="btn btn-secondary">← К списку игр</button>
                         </div>
