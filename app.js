@@ -1615,14 +1615,18 @@ function generateExportHTML(game) {
     if (filledSlots.length === 0) {
         listHTML = '<div class="export-list-item"><span class="export-list-name">Состав пуст</span></div>';
     } else {
-        listHTML = filledSlots.map(({ player }, index) => `
+        listHTML = filledSlots.map(({ player }, index) => {
+            const positionShort = getPositionShort(player.position);
+            const showPosition = positionShort === 'Вр' ? positionShort : '';
+            return `
             <div class="export-list-item">
                 <span class="export-list-order">${index + 1}</span>
                 <span class="export-list-number">${player.number || '?'}</span>
                 <span class="export-list-name">${player.name}</span>
-                <span class="export-list-position">${getPositionShort(player.position)}</span>
+                ${showPosition ? `<span class="export-list-position">${showPosition}</span>` : ''}
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     // Генерация схемы пятерок
@@ -1636,12 +1640,14 @@ function generateExportHTML(game) {
         for (let i = forwardsStart; i < defendersStart; i++) {
             const player = game.lineup[i];
             if (player) {
+                const positionShort = getPositionShort(player.position);
+                const showPosition = positionShort === 'Вр' ? `<div class="export-field-position">${positionShort}</div>` : '';
                 forwardsHTML += `
                     <div class="export-field-slot">
                         <div class="export-field-info">
                             <div class="export-field-number">${player.number || '?'}</div>
                             <div class="export-field-name">${player.name}</div>
-                            <div class="export-field-position">${getPositionShort(player.position)}</div>
+                            ${showPosition}
                         </div>
                     </div>
                 `;
@@ -1654,12 +1660,14 @@ function generateExportHTML(game) {
         for (let i = defendersStart; i < lineStart + 5; i++) {
             const player = game.lineup[i];
             if (player) {
+                const positionShort = getPositionShort(player.position);
+                const showPosition = positionShort === 'Вр' ? `<div class="export-field-position">${positionShort}</div>` : '';
                 defendersHTML += `
                     <div class="export-field-slot">
                         <div class="export-field-info">
                             <div class="export-field-number">${player.number || '?'}</div>
                             <div class="export-field-name">${player.name}</div>
-                            <div class="export-field-position">${getPositionShort(player.position)}</div>
+                            ${showPosition}
                         </div>
                     </div>
                 `;
