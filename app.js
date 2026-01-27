@@ -158,6 +158,7 @@ function createNewGame() {
         stadium: '',
         score: '',
         points: '',
+        color: '',
         playerStatuses: {}, // Статусы игроков: 'ready', 'not-ready' (Пас), 'doubtful' (Под ?), 'survey' (Опрос), null
         readyPlayers: Array(16).fill(null), // Список готовых играть (16 позиций)
         lineup: Array(16).fill(null) // Расстановка по пятеркам (16 позиций)
@@ -191,6 +192,7 @@ function selectGame(gameId) {
     if (game.weekday === undefined) game.weekday = '';
     if (game.stadium === undefined) game.stadium = '';
     if (game.points === undefined) game.points = '';
+    if (game.color === undefined) game.color = '';
     
     // Заполняем информацию об игре
     document.getElementById('gameTitle').value = game.title;
@@ -205,6 +207,10 @@ function selectGame(gameId) {
     const pointsEl = document.getElementById('gamePoints');
     if (pointsEl) {
         pointsEl.value = game.points || '';
+    }
+    const colorEl = document.getElementById('gameColor');
+    if (colorEl) {
+        colorEl.value = game.color || '';
     }
     
     // Скрываем список игр, показываем работу с игрой
@@ -338,6 +344,10 @@ function initializeEventListeners() {
     if (gamePointsEl) {
         gamePointsEl.addEventListener('change', saveGameInfo);
     }
+    const gameColorEl = document.getElementById('gameColor');
+    if (gameColorEl) {
+        gameColorEl.addEventListener('change', saveGameInfo);
+    }
 
     // Кнопка сохранения в JPEG
     document.getElementById('saveAsJpegBtn').addEventListener('click', () => {
@@ -452,14 +462,40 @@ function saveGameInfo() {
     if (!game) return;
     
     game.title = document.getElementById('gameTitle').value || `Игра ${games.indexOf(game) + 1}`;
-    game.date = document.getElementById('gameDate').value || new Date().toISOString().split('T')[0];
+    const dateValue = document.getElementById('gameDate').value;
+    game.date = dateValue || new Date().toISOString().split('T')[0];
     game.time = document.getElementById('gameTime').value;
     const weekdayEl = document.getElementById('gameWeekday');
-    game.weekday = weekdayEl ? weekdayEl.value : '';
+    // Если есть дата, пытаемся автоматически определить день недели
+    if (dateValue) {
+        const d = new Date(dateValue + 'T00:00:00');
+        if (!isNaN(d.getTime())) {
+            const weekdays = [
+                'Воскресенье',
+                'Понедельник',
+                'Вторник',
+                'Среда',
+                'Четверг',
+                'Пятница',
+                'Суббота'
+            ];
+            const autoWeekday = weekdays[d.getDay()];
+            game.weekday = autoWeekday;
+            if (weekdayEl) {
+                weekdayEl.value = autoWeekday;
+            }
+        } else {
+            game.weekday = weekdayEl ? weekdayEl.value : '';
+        }
+    } else {
+        game.weekday = weekdayEl ? weekdayEl.value : '';
+    }
     game.stadium = document.getElementById('gameStadium').value;
     game.score = document.getElementById('gameScore').value;
     const pointsEl = document.getElementById('gamePoints');
     game.points = pointsEl ? pointsEl.value : '';
+    const colorEl = document.getElementById('gameColor');
+    game.color = colorEl ? colorEl.value : '';
     
     saveData();
     renderGamesList();
@@ -586,6 +622,8 @@ function renderTeam() {
     });
 
     // Вспомогательная функция для отрисовки группы
+    let rowIndex = 1;
+
     const renderGroup = (players, title, extraClass) => {
         if (!players.length) return;
 
@@ -604,6 +642,7 @@ function renderTeam() {
 
             playerCard.innerHTML = `
                 <div class="player-info">
+                    <div class="player-row-index">${rowIndex++}</div>
                     <div class="player-number">${player.number || '?'}</div>
                     <div class="player-details">
                         <h3>${player.name}</h3>
@@ -1843,7 +1882,7 @@ function copyTeamText() {
 
     team.forEach(player => {
         const status = game.playerStatuses[player.id] || null;
-        const line = `${player.number || '?'} ${player.name} (${getPositionShort(player.position)})`;
+        const line = player.name;
         if (status === 'ready') {
             groups.ready.push(line);
         } else if (status === 'survey') {

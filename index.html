@@ -46,6 +46,7 @@
                 <button id="copyTeamCodeBtn" class="btn btn-secondary" title="Скопировать список команды в код">📋 Код команды</button>
                 <button id="showPWAInstallBtn" class="btn btn-secondary" title="Показать установку приложения" style="display: none;">📱 Установить приложение</button>
                 <button id="pwaCheckBtn" class="btn btn-secondary" title="Диагностика PWA" onclick="window.location.href='pwa-check.html'">🔍 Диагностика PWA</button>
+                <button id="sendRequestBtn" class="btn btn-secondary" title="Перейти на сайт лиги" onclick="window.open('https://llhn.ru','_blank')">📨 Отправить заявку</button>
             </div>
         </header>
 
@@ -70,17 +71,22 @@
                             <input type="time" id="gameTime" class="game-time-input" placeholder="Время">
                             <select id="gameWeekday" class="game-weekday-select" title="День недели">
                                 <option value="">День</option>
-                                <option value="Пн">Пн</option>
-                                <option value="Вт">Вт</option>
-                                <option value="Ср">Ср</option>
-                                <option value="Чт">Чт</option>
-                                <option value="Пт">Пт</option>
-                                <option value="Сб">Сб</option>
-                                <option value="Вс">Вс</option>
+                                <option value="Понедельник">Понедельник</option>
+                                <option value="Вторник">Вторник</option>
+                                <option value="Среда">Среда</option>
+                                <option value="Четверг">Четверг</option>
+                                <option value="Пятница">Пятница</option>
+                                <option value="Суббота">Суббота</option>
+                                <option value="Воскресенье">Воскресенье</option>
                             </select>
                             <input type="text" id="gameStadium" class="game-stadium-input" placeholder="Стадион">
                             <input type="text" id="gameScore" class="game-score-input" placeholder="Счет">
                             <input type="number" id="gamePoints" class="game-points-input" placeholder="Очки" min="0" max="2" step="1">
+                            <select id="gameColor" class="game-color-select" title="Цвет формы">
+                                <option value="">Цвет</option>
+                                <option value="Красный">Красный</option>
+                                <option value="Белый">Белый</option>
+                            </select>
                             <button id="backToGamesBtn" class="btn btn-secondary">← К списку игр</button>
                         </div>
                     </div>
