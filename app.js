@@ -622,15 +622,16 @@ function renderTeam() {
     });
 
     // Вспомогательная функция для отрисовки группы
-    let rowIndex = 1;
-
-    const renderGroup = (players, title, extraClass) => {
+    const renderGroup = (players, title, extraClass, allowRemoveFromStatus = false) => {
         if (!players.length) return;
 
         const header = document.createElement('div');
         header.className = `team-status-header ${extraClass}`;
         header.textContent = title;
         teamList.appendChild(header);
+
+        // Нумерация внутри каждой группы начинается с 1
+        let rowIndex = 1;
 
         players.forEach(player => {
             const status = game.playerStatuses[player.id] || null;
@@ -665,7 +666,7 @@ function renderTeam() {
                 </div>
                 <div class="player-actions">
                     <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
-                    <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить">🗑️</button>
+                    <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить из команды">🗑️</button>
                 </div>
             `;
 
@@ -674,11 +675,40 @@ function renderTeam() {
     };
 
     // Сначала без статуса
-    renderGroup(noStatusPlayers, 'Без статуса', 'team-status-none');
-    // Затем Опрос, Под ?, Пас
-    renderGroup(surveyPlayers, 'Опрос', 'team-status-survey');
-    renderGroup(maybePlayers, 'Под ?', 'team-status-maybe');
-    renderGroup(passPlayers, 'Пас', 'team-status-pass');
+    renderGroup(noStatusPlayers, 'Без статуса', 'team-status-none', false);
+    // Затем Опрос, Под ?, Пас — с возможностью удаления из списка (возврат в общий список)
+    renderGroup(surveyPlayers, 'Опрос', 'team-status-survey', true);
+    renderGroup(maybePlayers, 'Под ?', 'team-status-maybe', true);
+    renderGroup(passPlayers, 'Пас', 'team-status-pass', true);
+}
+
+// Удаление игрока из списков "Опрос" / "Под ?" / "Пас" (возврат в общий список команды)
+function removeFromStatus(playerId) {
+    const game = getCurrentGame();
+    if (!game) return;
+
+    if (!game.playerStatuses) {
+        game.playerStatuses = {};
+    }
+
+    // Сбрасываем статус игрока
+    delete game.playerStatuses[playerId];
+
+    // На всякий случай убираем из списков готовых и из расстановки
+    if (Array.isArray(game.readyPlayers)) {
+        game.readyPlayers = game.readyPlayers.map(slot => slot && slot.id === playerId ? null : slot);
+    }
+    if (Array.isArray(game.lineup)) {
+        game.lineup = game.lineup.map(slot => slot && slot.id === playerId ? null : slot);
+    }
+
+    saveData();
+    renderTeam();
+    renderReadyPlayers();
+    renderReadyPlayersCompact();
+    renderLineup();
+    updateReadyCount();
+    updateReadyCount2();
 }
 
 // Установка статуса игрока
