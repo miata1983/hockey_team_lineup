@@ -665,10 +665,10 @@ function renderTeam() {
                             title="Пас">Пас</button>
                 </div>
                 <div class="player-actions">
-                    ${allowRemoveFromStatus ? `<button type="button" class="btn-remove-from-status" onclick="window.removeFromStatus && window.removeFromStatus(${player.id})" title="Вернуть в общий список команды">Вернуть</button>` : ''}
                     <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
                     <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить из команды">🗑️</button>
                 </div>
+                ${allowRemoveFromStatus ? `<button class="remove-player" style="margin-top: 8px;" onclick="removeFromStatus(${player.id})">Удалить</button>` : ''}
             `;
 
             teamList.appendChild(playerCard);
