@@ -102,44 +102,52 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Для локальных ресурсов используем стратегию: кэш сначала, затем сеть
+  // Файлы приложения: всегда сначала сеть, чтобы подхватывать обновления без переустановки PWA
+  const pathname = url.pathname || '';
+  const isAppShell = pathname.endsWith('index.html') || pathname.includes('app.js') || pathname.includes('styles.css');
+
+  if (isAppShell) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (!response || response.status !== 200 || response.type === 'error') {
+            return response;
+          }
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+            console.log('[Service Worker] Обновлён из сети и закэширован:', request.url);
+          }).catch(() => {});
+          return response;
+        })
+        .catch(() => {
+          console.log('[Service Worker] Офлайн, из кэша:', request.url);
+          return caches.match(request).then((cached) => cached || new Response('', { status: 503 }));
+        })
+    );
+    return;
+  }
+
+  // Остальные локальные ресурсы: кэш сначала, затем сеть
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
         if (cachedResponse) {
-          console.log('[Service Worker] Запрос из кэша:', request.url);
           return cachedResponse;
         }
-
-        // Если нет в кэше, загружаем из сети и кэшируем
         return fetch(request)
           .then((response) => {
-            // Проверяем, что ответ валидный
             if (!response || response.status !== 200 || response.type === 'error') {
               return response;
             }
-
-            // Клонируем ответ для кэширования
             const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-                console.log('[Service Worker] Кэширован новый ресурс:', request.url);
-              })
-              .catch((err) => {
-                console.warn('[Service Worker] Ошибка кэширования:', err);
-              });
-
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache)).catch(() => {});
             return response;
           })
           .catch((error) => {
-            console.error('[Service Worker] Ошибка загрузки:', request.url, error);
-            // Если это HTML страница и она не в кэше, возвращаем index.html
             if (request.headers.get('accept') && request.headers.get('accept').includes('text/html')) {
               return caches.match(BASE_PATH + 'index.html') || caches.match('./index.html') || caches.match('/index.html');
             }
-            // Для других типов возвращаем ошибку
             throw error;
           });
       })

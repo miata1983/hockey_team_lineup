@@ -38,7 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
         })
             .then(reg => {
                 console.log('✅ Service Worker зарегистрирован:', reg.scope);
-                
+                // Сразу проверяем, нет ли новой версии SW на сервере
+                reg.update();
+
                 // Проверяем наличие иконок
                 fetch('./icon-192.png').then(r => {
                     if (r.ok) {
@@ -60,12 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('❌ Иконка icon-512.png не найдена! Создайте её с помощью create-icons-simple.html');
                 });
                 
-                // Проверяем обновления Service Worker
+                // При появлении новой версии SW — после активации страница перезагрузится (controllerchange)
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('🔄 Новая версия Service Worker доступна. Перезагрузите страницу.');
+                            console.log('🔄 Новая версия приложения. Перезагрузка...');
                         }
                     });
                 });
@@ -76,10 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('💡 Откройте pwa-check.html для диагностики');
             });
         
-        // Обработка обновлений
+        // После обновления SW перезагружаем страницу, чтобы подхватить новый код
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('🔄 Service Worker обновлен, перезагружаем страницу...');
+            console.log('🔄 Приложение обновлено, перезагрузка...');
             window.location.reload();
+        });
+
+        // При возврате во вкладку / открытии PWA — проверяем обновления на сервере
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                navigator.serviceWorker.getRegistration().then((reg) => reg && reg.update());
+            }
         });
     } else {
         console.warn('⚠️ Service Worker не поддерживается в этом браузере');
