@@ -1642,20 +1642,18 @@ async function saveAsJpeg() {
 
 // Генерация HTML для экспорта
 function generateExportHTML(game) {
-    const filledSlots = game.lineup
+    // Список игроков в экспорте должен содержать ВСЕХ готовых,
+    // даже если они не расставлены по звеньям
+    const readyPlayersList = game.readyPlayers
         .map((player, index) => ({ player, index }))
         .filter(item => item.player !== null)
-        .sort((a, b) => {
-            if (a.index === 0) return -1;
-            if (b.index === 0) return 1;
-            return a.index - b.index;
-        });
+        .sort((a, b) => a.index - b.index); // сначала вратарь (0), затем полевые 1..15
 
     let listHTML = '';
-    if (filledSlots.length === 0) {
+    if (readyPlayersList.length === 0) {
         listHTML = '<div class="export-list-item"><span class="export-list-name">Состав пуст</span></div>';
     } else {
-        listHTML = filledSlots.map(({ player }, index) => {
+        listHTML = readyPlayersList.map(({ player }, index) => {
             const positionShort = getPositionShort(player.position);
             const showPosition = positionShort === 'Вр' ? positionShort : '';
             return `
