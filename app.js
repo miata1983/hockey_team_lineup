@@ -665,6 +665,7 @@ function renderTeam() {
                             title="Пас">Пас</button>
                 </div>
                 <div class="player-actions">
+                    ${allowRemoveFromStatus ? `<button class="btn-icon" onclick="removeFromStatus(${player.id})" title="Удалить из этого списка и вернуть в общий список">↩</button>` : ''}
                     <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
                     <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить из команды">🗑️</button>
                 </div>
