@@ -978,6 +978,23 @@ header h1 {
     background: var(--highlight-color);
 }
 
+/* Кнопка «Вернуть» — убрать из списка Опрос/Под ?/Пас и вернуть в общий список команды */
+.btn-remove-from-status {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--card-bg);
+    background: var(--accent-color);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+.btn-remove-from-status:hover {
+    background: var(--highlight-color);
+}
 
 /* Схема состава на этапе 2 */
 .lineup-column-full .goalie-section {

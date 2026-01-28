@@ -665,7 +665,7 @@ function renderTeam() {
                             title="Пас">Пас</button>
                 </div>
                 <div class="player-actions">
-                    ${allowRemoveFromStatus ? `<button class="btn-icon" onclick="removeFromStatus(${player.id})" title="Удалить из этого списка и вернуть в общий список">↩</button>` : ''}
+                    ${allowRemoveFromStatus ? `<button type="button" class="btn-remove-from-status" onclick="window.removeFromStatus && window.removeFromStatus(${player.id})" title="Вернуть в общий список команды">Вернуть</button>` : ''}
                     <button class="btn-icon" onclick="editPlayer(${player.id})" title="Редактировать">✏️</button>
                     <button class="btn-icon" onclick="deletePlayerConfirm(${player.id})" title="Удалить из команды">🗑️</button>
                 </div>
@@ -2161,3 +2161,6 @@ function dismissPWAInstallBanner() {
         // Кнопка в интерфейсе остается видимой для повторного вызова
     }
 }
+
+// Доступ из разметки (onclick в карточках игроков)
+window.removeFromStatus = removeFromStatus;
