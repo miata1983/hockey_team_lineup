@@ -103,12 +103,26 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateHeaderView() {
     const body = document.body;
     if (!body) return;
+
     const gameWorkSection = document.getElementById('gameWorkSection');
-    const isHome = !gameWorkSection || gameWorkSection.style.display === 'none';
+    const isHome = !currentGameId || !gameWorkSection || gameWorkSection.style.display === 'none';
+
+    // Класс (для CSS)
+    body.classList.toggle('home-view', isHome);
+
+    // И прямое управление видимостью (надежнее для PWA/кэша стилей)
+    const titleEl = document.getElementById('appTitle');
+    const logoEl = document.getElementById('homeLogo');
+    const headerActions = document.querySelector('header .header-actions');
+
     if (isHome) {
-        body.classList.add('home-view');
+        if (titleEl) titleEl.style.display = 'none';
+        if (headerActions) headerActions.style.display = 'none';
+        if (logoEl) logoEl.style.display = 'flex';
     } else {
-        body.classList.remove('home-view');
+        if (titleEl) titleEl.style.display = '';
+        if (headerActions) headerActions.style.display = '';
+        if (logoEl) logoEl.style.display = '';
     }
 }
 

@@ -7,7 +7,8 @@ const urlsToCache = [
   BASE_PATH + 'app.js',
   BASE_PATH + 'manifest.json',
   BASE_PATH + 'icon-192.png',
-  BASE_PATH + 'icon-512.png'
+  BASE_PATH + 'icon-512.png',
+  BASE_PATH + 'logo-1000.png'
 ];
 
 // Установка service worker
