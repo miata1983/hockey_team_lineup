@@ -71,6 +71,40 @@ body.home-view header .home-logo {
     display: flex;
 }
 
+/* Домашний экран: убираем тёмную плашку шапки, делаем акцент на лого */
+body.home-view header {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+body.home-view header .header-main {
+    margin-bottom: 0;
+    padding: 10px 0;
+}
+
+body.home-view header .home-logo {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+
+body.home-view header .home-logo img {
+    height: 92px;
+    width: auto;
+    display: block;
+}
+
+/* Гамбургер на домашнем экране — без “тёмной области” за ним */
+body.home-view header .header-menu-toggle {
+    background: #ffffff;
+    color: #111;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+
 header h1 {
     font-size: 2.5em;
     background: linear-gradient(45deg, var(--highlight-color), #ff6b9d);
