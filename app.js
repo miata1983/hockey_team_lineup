@@ -857,6 +857,18 @@ function deleteGameConfirm(gameId) {
     document.getElementById('deleteGameModal').style.display = 'block';
 }
 
+// Порядок отображения в "Готовые играть": вратарь, нападающие вверху, защитники внизу
+function getReadyPlayersDisplayOrder(game) {
+    const slots = game.readyPlayers.map((player, index) => ({ player, index }));
+    const goalie = slots.filter(s => s.index === 0);
+    const field = slots.filter(s => s.index >= 1);
+    const forwards = field.filter(s => s.player && s.player.position === 'Нападающий').sort((a, b) => a.index - b.index);
+    const defenders = field.filter(s => s.player && s.player.position === 'Защитник').sort((a, b) => a.index - b.index);
+    const other = field.filter(s => s.player && s.player.position !== 'Нападающий' && s.player.position !== 'Защитник').sort((a, b) => a.index - b.index);
+    const emptyField = field.filter(s => !s.player).sort((a, b) => a.index - b.index);
+    return [...goalie, ...forwards, ...defenders, ...other, ...emptyField];
+}
+
 // Отображение списка готовых играть игроков (16 позиций) - этап 1
 function renderReadyPlayers() {
     const game = getCurrentGame();
@@ -865,17 +877,20 @@ function renderReadyPlayers() {
     const readyList = document.getElementById('readyPlayersList');
     readyList.innerHTML = '';
 
-    game.readyPlayers.forEach((player, index) => {
+    const displayOrder = getReadyPlayersDisplayOrder(game);
+    let displayNumber = 0;
+
+    displayOrder.forEach(({ player, index }) => {
         const slot = document.createElement('div');
         slot.className = `ready-player-slot ${player ? 'filled' : 'empty'}`;
         slot.dataset.slotIndex = index;
 
         // Для вратаря (слот 0) не показываем порядковый номер
         if (index !== 0) {
+            displayNumber++;
             const slotNumber = document.createElement('div');
             slotNumber.className = 'ready-slot-number';
-            // Сквозная нумерация начинается с первого полевого игрока
-            slotNumber.textContent = index;
+            slotNumber.textContent = displayNumber;
             slot.appendChild(slotNumber);
         }
 
@@ -895,7 +910,6 @@ function renderReadyPlayers() {
                 <button class="remove-player" onclick="removeFromReady(${index})" style="margin-top: 8px;">Удалить</button>
             `;
             
-            // Добавляем drag & drop для игрока из списка готовых
             const playerInfo = slotContent.querySelector('.ready-player-info');
             if (playerInfo) {
                 playerInfo.addEventListener('dragstart', handleReadyPlayerDragStart);
@@ -903,25 +917,16 @@ function renderReadyPlayers() {
             }
         } else {
             if (index === 0) {
-                // Для вратаря показываем подпись
-                slotContent.innerHTML = `
-                    <div class="empty">Вратарь</div>
-                `;
+                slotContent.innerHTML = `<div class="empty">Вратарь</div>`;
             } else {
-                // Для пустых полевых только номер слева, без текста
-                slotContent.innerHTML = `
-                    <div class="empty"></div>
-                `;
+                slotContent.innerHTML = `<div class="empty"></div>`;
             }
         }
 
         slot.appendChild(slotContent);
-
-        // Drop zone для drag and drop
         slot.addEventListener('dragover', handleLineupDragOver);
         slot.addEventListener('drop', handleLineupDrop);
         slot.addEventListener('dragleave', handleDragLeave);
-
         readyList.appendChild(slot);
     });
 }
@@ -934,7 +939,6 @@ function renderReadyPlayersCompact() {
     const readyList = document.getElementById('readyPlayersList2');
     readyList.innerHTML = '';
 
-    // Разделяем игроков на тех, кто в lineup и кто нет
     const playersData = [];
     game.readyPlayers.forEach((player, index) => {
         if (!player) return;
@@ -942,23 +946,27 @@ function renderReadyPlayersCompact() {
         playersData.push({ player, index, isInLineup });
     });
 
-    // Сортируем: сначала те, кто НЕ в lineup, потом те, кто в lineup
+    // Сортируем: не в составе выше; внутри группы — нападающие вверху, защитники внизу
+    const posOrder = { 'Вратарь': 0, 'Нападающий': 1, 'Защитник': 2 };
     playersData.sort((a, b) => {
-        if (a.isInLineup === b.isInLineup) return a.index - b.index;
-        return a.isInLineup ? 1 : -1;
+        if (a.isInLineup !== b.isInLineup) return a.isInLineup ? 1 : -1;
+        const posA = posOrder[a.player.position] ?? 1;
+        const posB = posOrder[b.player.position] ?? 1;
+        if (posA !== posB) return posA - posB;
+        return a.index - b.index;
     });
 
-    // Рендерим отсортированный список
-    playersData.forEach(({ player, index, isInLineup }) => {
+    // Рендерим отсортированный список (нападающие вверху, защитники внизу)
+    playersData.forEach(({ player, index, isInLineup }, displayIdx) => {
         const playerCard = document.createElement('div');
         playerCard.className = `ready-player-card ${isInLineup ? 'in-lineup' : ''}`;
-        playerCard.draggable = !isInLineup; // Неактивные не перетаскиваются
+        playerCard.draggable = !isInLineup;
         playerCard.dataset.playerId = player.id;
 
         const positionShort = getPositionShort(player.position);
 
         playerCard.innerHTML = `
-            <div class="ready-player-compact-number">${index + 1}</div>
+            <div class="ready-player-compact-number">${displayIdx + 1}</div>
             <div class="player-number">${player.number || '?'}</div>
             <div class="player-details">
                 <h3>${player.name}</h3>
