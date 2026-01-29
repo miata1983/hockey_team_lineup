@@ -862,10 +862,32 @@ function getReadyPlayersDisplayOrder(game) {
     const slots = game.readyPlayers.map((player, index) => ({ player, index }));
     const goalie = slots.filter(s => s.index === 0);
     const field = slots.filter(s => s.index >= 1);
-    const forwards = field.filter(s => s.player && s.player.position === 'Нападающий').sort((a, b) => a.index - b.index);
-    const defenders = field.filter(s => s.player && s.player.position === 'Защитник').sort((a, b) => a.index - b.index);
-    const other = field.filter(s => s.player && s.player.position !== 'Нападающий' && s.player.position !== 'Защитник').sort((a, b) => a.index - b.index);
-    const emptyField = field.filter(s => !s.player).sort((a, b) => a.index - b.index);
+
+    const forwards = [];
+    const defenders = [];
+    const other = [];
+    const emptyField = [];
+
+    field.forEach(s => {
+        if (!s.player) {
+            emptyField.push(s);
+            return;
+        }
+        const posShort = getPositionShort(s.player.position); // 'Вр', 'Нап', 'Защ'
+        if (posShort === 'Нап') {
+            forwards.push(s);
+        } else if (posShort === 'Защ') {
+            defenders.push(s);
+        } else {
+            other.push(s);
+        }
+    });
+
+    forwards.sort((a, b) => a.index - b.index);
+    defenders.sort((a, b) => a.index - b.index);
+    other.sort((a, b) => a.index - b.index);
+    emptyField.sort((a, b) => a.index - b.index);
+
     return [...goalie, ...forwards, ...defenders, ...other, ...emptyField];
 }
 
@@ -943,15 +965,16 @@ function renderReadyPlayersCompact() {
     game.readyPlayers.forEach((player, index) => {
         if (!player) return;
         const isInLineup = game.lineup.some(slot => slot && slot.id === player.id);
-        playersData.push({ player, index, isInLineup });
+        const posShort = getPositionShort(player.position); // 'Вр', 'Нап', 'Защ'
+        playersData.push({ player, index, isInLineup, posShort });
     });
 
     // Сортируем: не в составе выше; внутри группы — нападающие вверху, защитники внизу
-    const posOrder = { 'Вратарь': 0, 'Нападающий': 1, 'Защитник': 2 };
+    const posOrder = { 'Вр': 0, 'Нап': 1, 'Защ': 2 };
     playersData.sort((a, b) => {
         if (a.isInLineup !== b.isInLineup) return a.isInLineup ? 1 : -1;
-        const posA = posOrder[a.player.position] ?? 1;
-        const posB = posOrder[b.player.position] ?? 1;
+        const posA = posOrder[a.posShort] ?? 1;
+        const posB = posOrder[b.posShort] ?? 1;
         if (posA !== posB) return posA - posB;
         return a.index - b.index;
     });
