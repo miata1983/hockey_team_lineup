@@ -73,7 +73,7 @@ header {
 }
 
 .home-title-main {
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 900;
     line-height: 1.05;
     color: #111;
@@ -83,11 +83,21 @@ header {
 }
 
 .home-title-sub {
-    font-size: 1.05em;
+    font-size: 0.95em;
     font-weight: 600;
     line-height: 1.1;
     color: rgba(0, 0, 0, 0.65);
     white-space: nowrap;
+}
+
+/* На очень узких экранах уменьшаем ещё сильнее, чтобы не перекрывалось лого/меню */
+@media (max-width: 420px) {
+    body.home-view header .home-title-main {
+        font-size: 1.35em;
+    }
+    body.home-view header .home-title-sub {
+        font-size: 0.85em;
+    }
 }
 
 body.home-view header .header-actions {
