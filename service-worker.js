@@ -1,5 +1,5 @@
 // ВАЖНО: меняйте версию при деплое, чтобы PWA гарантированно подтягивал обновления
-const CACHE_NAME = 'hockey-lineup-v6';
+const CACHE_NAME = 'hockey-lineup-v7';
 const BASE_PATH = '/hockey_team_lineup/';
 const urlsToCache = [
   BASE_PATH,
