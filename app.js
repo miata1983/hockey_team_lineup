@@ -2003,7 +2003,8 @@ function copyTeamText() {
     }
 
     const groups = {
-        ready: [],
+        readyGoalies: [],
+        readyField: [],
         survey: [],
         doubtful: [],
         'not-ready': [],
@@ -2012,25 +2013,34 @@ function copyTeamText() {
 
     team.forEach(player => {
         const status = game.playerStatuses[player.id] || null;
-        const line = player.name;
         if (status === 'ready') {
-            groups.ready.push(line);
+            // В "ГОТОВЫ" вратаря не нумеруем и дописываем "Вр"
+            if (getPositionShort(player.position) === 'Вр') {
+                groups.readyGoalies.push(`${player.name} Вр`);
+            } else {
+                groups.readyField.push(player.name);
+            }
         } else if (status === 'survey') {
-            groups.survey.push(line);
+            groups.survey.push(player.name);
         } else if (status === 'doubtful') {
-            groups.doubtful.push(line);
+            groups.doubtful.push(player.name);
         } else if (status === 'not-ready') {
-            groups['not-ready'].push(line);
+            groups['not-ready'].push(player.name);
         } else {
-            groups.none.push(line);
+            groups.none.push(player.name);
         }
     });
 
     const lines = [];
 
-    if (groups.ready.length) {
+    if (groups.readyGoalies.length || groups.readyField.length) {
         lines.push('ГОТОВЫ:');
-        groups.ready.forEach((line, index) => {
+        // Вратари — без номера
+        groups.readyGoalies.forEach((line) => {
+            lines.push(line);
+        });
+        // Полевые — с нумерацией с 1
+        groups.readyField.forEach((line, index) => {
             lines.push(`${index + 1}. ${line}`);
         });
         lines.push('');
