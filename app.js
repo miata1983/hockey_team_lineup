@@ -113,16 +113,19 @@ function updateHeaderView() {
     // И прямое управление видимостью (надежнее для PWA/кэша стилей)
     const titleEl = document.getElementById('appTitle');
     const logoEl = document.getElementById('homeLogo');
+    const homeTitleEl = document.getElementById('homeTitle');
     const headerActions = document.querySelector('header .header-actions');
 
     if (isHome) {
         if (titleEl) titleEl.style.display = 'none';
         if (headerActions) headerActions.style.display = 'none';
         if (logoEl) logoEl.style.display = 'flex';
+        if (homeTitleEl) homeTitleEl.style.display = 'flex';
     } else {
         if (titleEl) titleEl.style.display = '';
         if (headerActions) headerActions.style.display = '';
         if (logoEl) logoEl.style.display = '';
+        if (homeTitleEl) homeTitleEl.style.display = '';
     }
 }
 

@@ -59,6 +59,37 @@ header {
     object-fit: contain;
 }
 
+/* Заголовок на домашнем экране (между лого и меню) */
+.home-title {
+    display: none;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 10px;
+}
+
+.home-title-main {
+    font-size: 1.8em;
+    font-weight: 900;
+    line-height: 1.05;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-title-sub {
+    font-size: 1.05em;
+    font-weight: 600;
+    line-height: 1.1;
+    color: rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+}
+
 body.home-view header .header-actions {
     display: none;
 }
@@ -68,6 +99,10 @@ body.home-view header #appTitle {
 }
 
 body.home-view header .home-logo {
+    display: flex;
+}
+
+body.home-view header .home-title {
     display: flex;
 }
 
