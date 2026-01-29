@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
     renderTeam();
     renderGamesList();
+    updateHeaderView();
     
     // Регистрация service worker для PWA
     if ('serviceWorker' in navigator) {
@@ -97,6 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализация PWA установки
     initPWAInstall();
 });
+
+// Обновление вида шапки в зависимости от экрана
+function updateHeaderView() {
+    const body = document.body;
+    if (!body) return;
+    const gameWorkSection = document.getElementById('gameWorkSection');
+    const isHome = !gameWorkSection || gameWorkSection.style.display === 'none';
+    if (isHome) {
+        body.classList.add('home-view');
+    } else {
+        body.classList.remove('home-view');
+    }
+}
 
 // Загрузка данных из localStorage
 function loadData() {
@@ -229,6 +243,10 @@ function selectGame(gameId) {
     
     // Показываем первый этап (формирование списка готовых)
     showStage1();
+    // Мы больше не на стартовом экране — обновляем шапку (прячем логотип, показываем заголовок и кнопку добавления)
+    updateHeaderView();
+    // Обновляем вид шапки (для экрана игры показываем заголовок и кнопки)
+    updateHeaderView();
 }
 
 // Показать этап 1: формирование списка готовых
@@ -270,6 +288,8 @@ function deleteGame(gameId) {
         document.getElementById('gamesSection').style.display = 'block';
         document.getElementById('gameWorkSection').style.display = 'none';
         document.getElementById('saveAsJpegBtn').style.display = 'none';
+        // Вернулись на стартовый экран — обновляем шапку (показываем логотип)
+        updateHeaderView();
     }
     saveData();
     renderGamesList();
@@ -286,6 +306,8 @@ function backToGames() {
     
     // Обновляем список игр (чтобы убрать выделение)
     renderGamesList();
+    // Возврат на домашний экран — обновляем шапку (показываем логотип, скрываем заголовок и кнопку добавления)
+    updateHeaderView();
 }
 
 // Инициализация обработчиков событий
