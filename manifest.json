@@ -1,6 +1,6 @@
 {
-  "name": "Хоккейный Состав",
-  "short_name": "Хоккей Состав",
+  "name": "ХК Снеговик",
+  "short_name": "ХК Снеговик",
   "description": "Приложение для формирования состава на хоккейную игру",
   "start_url": "/hockey_team_lineup/",
   "scope": "/hockey_team_lineup/",
