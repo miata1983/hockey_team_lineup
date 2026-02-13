@@ -284,12 +284,12 @@ header h1 {
 
 .game-item:hover {
     /* Лёгкий подсвет без рамки и сдвига, чтобы на мобильных не залипало */
-    background: rgba(233, 69, 96, 0.06);
+    background: var(--secondary-color);
 }
 
 .game-item.active {
-    border-color: var(--highlight-color);
-    background: rgba(233, 69, 96, 0.1);
+    border-color: transparent;
+    background: var(--secondary-color);
 }
 
 .game-item-content {
