@@ -324,6 +324,22 @@ header h1 {
     font-weight: 600;
 }
 
+.game-item-score-wrapper {
+    font-weight: 600;
+}
+
+.game-item-points {
+    font-weight: 600;
+}
+
+.game-item-points-positive {
+    color: var(--success-color);
+}
+
+.game-item-points-zero {
+    color: #ff4b5c;
+}
+
 .game-item-actions {
     display: flex;
     gap: 5px;

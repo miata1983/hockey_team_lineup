@@ -873,13 +873,25 @@ function renderGamesList() {
             dateTimeStr += ` ${game.time}`;
         }
         
+        // Формируем блок счета и очков
+        let scoreBlock = '';
+        if (game.score) {
+            let pointsHtml = '';
+            if (game.points !== undefined && game.points !== '') {
+                const pts = parseInt(game.points, 10);
+                const ptsClass = pts === 0 ? 'game-item-points game-item-points-zero' : 'game-item-points game-item-points-positive';
+                pointsHtml = ` / <span class="${ptsClass}">${game.points} оч</span>`;
+            }
+            scoreBlock = `<span class="game-item-score">${game.score}</span>${pointsHtml}`;
+        }
+
         gameItem.innerHTML = `
             <div class="game-item-content" onclick="selectGame(${game.id})">
                 <div class="game-item-title">${game.title}</div>
                 <div class="game-item-meta">
                     <span class="game-item-date">${dateTimeStr}</span>
                     ${game.stadium ? `<span class="game-item-stadium">📍 ${game.stadium}</span>` : ''}
-                    ${game.score ? `<span class="game-item-score">${game.score}${game.points !== undefined && game.points !== '' ? ` ${game.points} оч` : ''}</span>` : ''}
+                    ${scoreBlock ? `<span class="game-item-score-wrapper">${scoreBlock}</span>` : ''}
                 </div>
             </div>
             <div class="game-item-actions">
