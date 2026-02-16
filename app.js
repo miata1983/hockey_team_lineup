@@ -1724,18 +1724,18 @@ async function saveAsJpeg() {
 
 // Генерация HTML для экспорта
 function generateExportHTML(game) {
-    // Список игроков в экспорте должен содержать ВСЕХ готовых,
-    // даже если они не расставлены по звеньям
-    const readyPlayersList = game.readyPlayers
-        .map((player, index) => ({ player, index }))
-        .filter(item => item.player !== null)
-        .sort((a, b) => a.index - b.index); // сначала вратарь (0), затем полевые 1..15
+    // Список игроков слева: вратарь первый, затем нападающие по возрастанию номера, затем защитники по возрастанию номера
+    const allReady = game.readyPlayers.filter(p => p !== null);
+    const goalies = allReady.filter(p => getPositionShort(p.position) === 'Вр').sort((a, b) => (a.number || 0) - (b.number || 0));
+    const forwards = allReady.filter(p => getPositionShort(p.position) === 'Нап').sort((a, b) => (a.number || 0) - (b.number || 0));
+    const defenders = allReady.filter(p => getPositionShort(p.position) === 'Защ').sort((a, b) => (a.number || 0) - (b.number || 0));
+    const readyPlayersList = [...goalies, ...forwards, ...defenders];
 
     let listHTML = '';
     if (readyPlayersList.length === 0) {
         listHTML = '<div class="export-list-item"><span class="export-list-name">Состав пуст</span></div>';
     } else {
-        listHTML = readyPlayersList.map(({ player }, index) => {
+        listHTML = readyPlayersList.map((player, index) => {
             const positionShort = getPositionShort(player.position);
             const showPosition = positionShort === 'Вр' ? positionShort : '';
             return `
