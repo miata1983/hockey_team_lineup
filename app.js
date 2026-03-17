@@ -1828,10 +1828,14 @@ function generateExportHTML(game) {
         goalieHTML = '<div class="export-goalie-slot empty">Вратарь не выбран</div>';
     }
 
-    // Формируем строку с датой и временем
-    let dateTimeStr = game.date || 'Не указана';
-    if (game.time) {
-        dateTimeStr += ` ${game.time}`;
+    // Формируем строку с датой (дд.мм.гггг) и временем
+    let dateTimeStr = 'Не указана';
+    if (game.date) {
+        const [y, m, d] = game.date.split('-');
+        dateTimeStr = d && m && y ? `${d}.${m}.${y}` : game.date;
+        if (game.time) {
+            dateTimeStr += ` ${game.time}`;
+        }
     }
 
     // Формируем строку с днем недели
