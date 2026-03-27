@@ -11,6 +11,26 @@ function escapeHTML(str) {
     return String(str).replace(/[&<>"']/g, m => map[m]);
 }
 
+// Защита от двойного клика: возвращает false если прошло меньше delay мс с последнего вызова
+function makeClickGuard(delay = 500) {
+    let lastTime = 0;
+    return function() {
+        const now = Date.now();
+        if (now - lastTime < delay) return false;
+        lastTime = now;
+        return true;
+    };
+}
+const guardRemoveReady = makeClickGuard();
+const guardRemoveLineup = makeClickGuard();
+
+// Debounce для сохранения данных
+let saveDataTimer = null;
+function saveDataDebounced() {
+    clearTimeout(saveDataTimer);
+    saveDataTimer = setTimeout(saveData, 300);
+}
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -1383,6 +1403,12 @@ function handleReadyDrop(e) {
         return;
     }
 
+    // Проверяем, не занят ли слот другим игроком
+    if (game.readyPlayers[slotIndex]) {
+        alert('Этот слот уже занят! Сначала освободите его.');
+        return;
+    }
+
     // Добавляем игрока в слот
     game.readyPlayers[slotIndex] = draggedPlayer;
     saveData();
@@ -1473,7 +1499,9 @@ function handleLineupDrop(e) {
                 return false;
             }
             
-            game.readyPlayers[currentSlotIndex] = null;
+            // Если целевой слот занят другим игроком — меняем местами
+            const displaced = game.readyPlayers[slotIndex];
+            game.readyPlayers[currentSlotIndex] = displaced || null;
             game.readyPlayers[slotIndex] = draggedPlayer;
             saveData();
             renderReadyPlayers();
@@ -1512,6 +1540,14 @@ function handleLineupDrop(e) {
         return false;
     }
 
+    // Проверяем, не занят ли слот в расстановке
+    if (game.lineup[slotIndex]) {
+        alert('Этот слот уже занят! Сначала уберите игрока из позиции.');
+        draggedPlayer = null;
+        draggedFromReady = false;
+        return false;
+    }
+
     // Добавляем игрока в слот
     game.lineup[slotIndex] = draggedPlayer;
     saveData();
@@ -1533,6 +1569,7 @@ function handleDragLeave(e) {
 
 // Удаление игрока из списка готовых
 function removeFromReady(slotIndex) {
+    if (!guardRemoveReady()) return;
     const game = getCurrentGame();
     if (!game) return;
 
@@ -1564,6 +1601,7 @@ function removeFromReady(slotIndex) {
 
 // Удаление игрока из состава
 function removeFromLineup(slotIndex) {
+    if (!guardRemoveLineup()) return;
     const game = getCurrentGame();
     if (!game) return;
 
@@ -1918,9 +1956,32 @@ function importData(file) {
             if (!data.team || !Array.isArray(data.team)) {
                 throw new Error('Неверный формат файла: отсутствует массив команды');
             }
-            
+
             if (!data.games || !Array.isArray(data.games)) {
                 throw new Error('Неверный формат файла: отсутствует массив игр');
+            }
+
+            // Проверяем структуру каждого игрока
+            const invalidPlayer = data.team.find(p =>
+                !p || typeof p !== 'object' ||
+                typeof p.name !== 'string' || p.name.trim() === '' ||
+                !['number', 'string'].includes(typeof p.id) ||
+                typeof p.position !== 'string'
+            );
+            if (invalidPlayer) {
+                throw new Error('Файл содержит некорректные данные игрока. Проверьте формат файла.');
+            }
+
+            // Проверяем структуру каждой игры
+            const invalidGame = data.games.find(g =>
+                !g || typeof g !== 'object' ||
+                !['number', 'string'].includes(typeof g.id) ||
+                typeof g.title !== 'string' ||
+                !Array.isArray(g.readyPlayers) ||
+                !Array.isArray(g.lineup)
+            );
+            if (invalidGame) {
+                throw new Error('Файл содержит некорректные данные игры. Проверьте формат файла.');
             }
             
             // Подтверждение импорта
