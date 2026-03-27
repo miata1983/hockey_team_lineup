@@ -4,6 +4,13 @@ let games = [];
 let currentGameId = null;
 let deferredPrompt = null; // Для установки PWA
 
+// Экранирование HTML для защиты от XSS
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(str).replace(/[&<>"']/g, m => map[m]);
+}
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -694,8 +701,8 @@ function renderTeam() {
                     <div class="player-row-index">${rowIndex++}</div>
                     <div class="player-number">${player.number || '?'}</div>
                     <div class="player-details">
-                        <h3>${player.name}</h3>
-                        <p>${positionShort}</p>
+                        <h3>${escapeHTML(player.name)}</h3>
+                        <p>${escapeHTML(positionShort)}</p>
                     </div>
                 </div>
                 <div class="player-status-buttons">
@@ -880,17 +887,17 @@ function renderGamesList() {
             if (game.points !== undefined && game.points !== '') {
                 const pts = parseInt(game.points, 10);
                 const ptsClass = pts === 0 ? 'game-item-points game-item-points-zero' : 'game-item-points game-item-points-positive';
-                pointsHtml = ` / <span class="${ptsClass}">${game.points} оч</span>`;
+                pointsHtml = ` / <span class="${ptsClass}">${escapeHTML(game.points)} оч</span>`;
             }
-            scoreBlock = `<span class="game-item-score">${game.score}</span>${pointsHtml}`;
+            scoreBlock = `<span class="game-item-score">${escapeHTML(game.score)}</span>${pointsHtml}`;
         }
 
         gameItem.innerHTML = `
             <div class="game-item-content" onclick="selectGame(${game.id})">
-                <div class="game-item-title">${game.title}</div>
+                <div class="game-item-title">${escapeHTML(game.title)}</div>
                 <div class="game-item-meta">
-                    <span class="game-item-date">${dateTimeStr}</span>
-                    ${game.stadium ? `<span class="game-item-stadium">📍 ${game.stadium}</span>` : ''}
+                    <span class="game-item-date">${escapeHTML(dateTimeStr)}</span>
+                    ${game.stadium ? `<span class="game-item-stadium">📍 ${escapeHTML(game.stadium)}</span>` : ''}
                     ${scoreBlock ? `<span class="game-item-score-wrapper">${scoreBlock}</span>` : ''}
                 </div>
             </div>
@@ -976,8 +983,8 @@ function renderReadyPlayers() {
                 <div class="ready-player-info" draggable="true" data-player-id="${player.id}" data-from-ready="true">
                     <div class="player-number">${player.number || '?'}</div>
                     <div class="player-details">
-                        <h3>${player.name}</h3>
-                        <p>${positionShort}</p>
+                        <h3>${escapeHTML(player.name)}</h3>
+                        <p>${escapeHTML(positionShort)}</p>
                     </div>
                 </div>
                 <button class="remove-player" onclick="removeFromReady(${index})" style="margin-top: 8px;">Удалить</button>
@@ -1041,10 +1048,10 @@ function renderReadyPlayersCompact() {
 
         playerCard.innerHTML = `
             <div class="ready-player-compact-number">${displayIdx + 1}</div>
-            <div class="player-number">${player.number || '?'}</div>
+            <div class="player-number">${escapeHTML(player.number || '?')}</div>
             <div class="player-details">
-                <h3>${player.name}</h3>
-                <p>${positionShort}</p>
+                <h3>${escapeHTML(player.name)}</h3>
+                <p>${escapeHTML(positionShort)}</p>
             </div>
             ${isInLineup ? '<div class="in-lineup-badge">✓</div>' : ''}
         `;
@@ -1089,8 +1096,8 @@ function renderGoalieSlot() {
                 <div class="player-info">
                     <div class="player-number">${player.number || '?'}</div>
                     <div class="player-details">
-                        <h3>${player.name}</h3>
-                        <p>${positionShort}</p>
+                        <h3>${escapeHTML(player.name)}</h3>
+                        <p>${escapeHTML(positionShort)}</p>
                     </div>
                 </div>
                 <button class="remove-player" onclick="removeFromLineup(0)">Удалить</button>
@@ -1172,8 +1179,8 @@ function createFieldSlot(index, expectedPosition) {
                 <div class="player-info">
                     <div class="player-number">${player.number || '?'}</div>
                     <div class="player-details">
-                        <h3>${player.name}</h3>
-                        <p>${positionShort}</p>
+                        <h3>${escapeHTML(player.name)}</h3>
+                        <p>${escapeHTML(positionShort)}</p>
                     </div>
                 </div>
                 <button class="remove-player" onclick="removeFromLineup(${index})">Удалить</button>
@@ -1742,7 +1749,7 @@ function generateExportHTML(game) {
             <div class="export-list-item">
                 <span class="export-list-order">${index + 1}</span>
                 <span class="export-list-number">${player.number || '?'}</span>
-                <span class="export-list-name">${player.name}</span>
+                <span class="export-list-name">${escapeHTML(player.name)}</span>
                 ${showPosition ? `<span class="export-list-position">${showPosition}</span>` : ''}
             </div>
         `;
@@ -1766,7 +1773,7 @@ function generateExportHTML(game) {
                     <div class="export-field-slot">
                         <div class="export-field-info">
                             <div class="export-field-number">${player.number || '?'}</div>
-                            <div class="export-field-name">${player.name}</div>
+                            <div class="export-field-name">${escapeHTML(player.name)}</div>
                             ${showPosition}
                         </div>
                     </div>
@@ -1786,7 +1793,7 @@ function generateExportHTML(game) {
                     <div class="export-field-slot">
                         <div class="export-field-info">
                             <div class="export-field-number">${player.number || '?'}</div>
-                            <div class="export-field-name">${player.name}</div>
+                            <div class="export-field-name">${escapeHTML(player.name)}</div>
                             ${showPosition}
                         </div>
                     </div>
@@ -1819,7 +1826,7 @@ function generateExportHTML(game) {
             <div class="export-goalie-slot">
                 <div class="export-goalie-info">
                     <div class="export-goalie-number">${goalie.number || '?'}</div>
-                    <div class="export-goalie-name">${goalie.name}</div>
+                    <div class="export-goalie-name">${escapeHTML(goalie.name)}</div>
                     <div class="export-goalie-position">${getPositionShort(goalie.position)}</div>
                 </div>
             </div>
@@ -1841,24 +1848,24 @@ function generateExportHTML(game) {
     // Формируем строку с днем недели
     let weekdayStr = '';
     if (game.weekday) {
-        weekdayStr = `<div class="export-game-weekday">${game.weekday}</div>`;
+        weekdayStr = `<div class="export-game-weekday">${escapeHTML(game.weekday)}</div>`;
     }
 
     // Формируем строку с цветом формы
     let colorStr = '';
     if (game.color) {
-        colorStr = `<div class="export-game-color">ФОРМА ${game.color.toUpperCase()}</div>`;
+        colorStr = `<div class="export-game-color">ФОРМА ${escapeHTML(game.color.toUpperCase())}</div>`;
     }
 
     return `
         <div class="export-left">
-            <div class="export-title">${game.title || 'Состав команды'}</div>
+            <div class="export-title">${escapeHTML(game.title || 'Состав команды')}</div>
             <div class="export-game-info">
-                <div class="export-game-date">Дата: ${dateTimeStr}</div>
+                <div class="export-game-date">Дата: ${escapeHTML(dateTimeStr)}</div>
                 ${weekdayStr}
-                ${game.stadium ? `<div class="export-game-stadium">Стадион: ${game.stadium}</div>` : ''}
+                ${game.stadium ? `<div class="export-game-stadium">Стадион: ${escapeHTML(game.stadium)}</div>` : ''}
                 ${colorStr}
-                ${game.score ? `<div class="export-game-score">Счет: ${game.score}</div>` : ''}
+                ${game.score ? `<div class="export-game-score">Счет: ${escapeHTML(game.score)}</div>` : ''}
             </div>
             <div class="export-section-title">Список игроков</div>
             <div class="export-list">${listHTML}</div>
