@@ -31,6 +31,27 @@ function saveDataDebounced() {
     saveDataTimer = setTimeout(saveData, 300);
 }
 
+// Утилита копирования в буфер обмена с fallback для старых браузеров
+function copyToClipboard(text, successMsg) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert(successMsg);
+    }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert(successMsg);
+        } catch (err) {
+            alert('Не удалось скопировать. Текст выведен в консоль.');
+            console.log(text);
+        }
+        document.body.removeChild(textarea);
+    });
+}
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -491,6 +512,28 @@ function initializeEventListeners() {
             }
         });
     }
+
+    // Drag-drop: delegation на контейнеры (вместо навешивания на каждый слот при рендере)
+    const readyPlayersList = document.getElementById('readyPlayersList');
+    readyPlayersList.addEventListener('dragstart', handleReadyPlayerDragStart);
+    readyPlayersList.addEventListener('dragend', handleDragEnd);
+    readyPlayersList.addEventListener('dragover', handleDragOver);
+    readyPlayersList.addEventListener('drop', handleReadyDrop);
+    readyPlayersList.addEventListener('dragleave', handleDragLeave);
+
+    const readyPlayersList2 = document.getElementById('readyPlayersList2');
+    readyPlayersList2.addEventListener('dragstart', handleReadyPlayerDragStart);
+    readyPlayersList2.addEventListener('dragend', handleDragEnd);
+
+    const goalieSlot = document.getElementById('goalieSlot');
+    goalieSlot.addEventListener('dragover', handleDragOver);
+    goalieSlot.addEventListener('drop', handleLineupDrop);
+    goalieSlot.addEventListener('dragleave', handleDragLeave);
+
+    const linesContainer = document.getElementById('linesContainer');
+    linesContainer.addEventListener('dragover', handleDragOver);
+    linesContainer.addEventListener('drop', handleLineupDrop);
+    linesContainer.addEventListener('dragleave', handleDragLeave);
 
     // Подтверждение импорта данных
     document.getElementById('confirmImportBtn').addEventListener('click', () => {
@@ -1010,11 +1053,6 @@ function renderReadyPlayers() {
                 <button class="remove-player" onclick="removeFromReady(${index})" style="margin-top: 8px;">Удалить</button>
             `;
             
-            const playerInfo = slotContent.querySelector('.ready-player-info');
-            if (playerInfo) {
-                playerInfo.addEventListener('dragstart', handleReadyPlayerDragStart);
-                playerInfo.addEventListener('dragend', handleDragEnd);
-            }
         } else {
             if (index === 0) {
                 slotContent.innerHTML = `<div class="empty">Вратарь</div>`;
@@ -1024,9 +1062,6 @@ function renderReadyPlayers() {
         }
 
         slot.appendChild(slotContent);
-        slot.addEventListener('dragover', handleLineupDragOver);
-        slot.addEventListener('drop', handleLineupDrop);
-        slot.addEventListener('dragleave', handleDragLeave);
         readyList.appendChild(slot);
     });
 }
@@ -1075,12 +1110,6 @@ function renderReadyPlayersCompact() {
             </div>
             ${isInLineup ? '<div class="in-lineup-badge">✓</div>' : ''}
         `;
-
-        // Drag and Drop только для активных
-        if (!isInLineup) {
-            playerCard.addEventListener('dragstart', handleReadyPlayerDragStart);
-            playerCard.addEventListener('dragend', handleDragEnd);
-        }
 
         readyList.appendChild(playerCard);
     });
@@ -1144,9 +1173,6 @@ function renderGoalieSlot() {
     }
 
     goalieSlot.appendChild(slotContent);
-    goalieSlot.addEventListener('dragover', handleLineupDragOver);
-    goalieSlot.addEventListener('drop', handleLineupDrop);
-    goalieSlot.addEventListener('dragleave', handleDragLeave);
 }
 
 // Отображение трех звеньев
@@ -1234,10 +1260,6 @@ function createFieldSlot(index, expectedPosition) {
     }
 
     slot.appendChild(slotContent);
-    slot.addEventListener('dragover', handleLineupDragOver);
-    slot.addEventListener('drop', handleLineupDrop);
-    slot.addEventListener('dragleave', handleDragLeave);
-
     return slot;
 }
 
@@ -1314,13 +1336,19 @@ function handleReadyPlayerDragStart(e) {
         e.preventDefault();
         return;
     }
-    
-    const playerId = parseInt(e.currentTarget.dataset.playerId);
+
+    const draggable = e.target.closest('[data-player-id][data-from-ready]');
+    if (!draggable) {
+        e.preventDefault();
+        return;
+    }
+
+    const playerId = parseInt(draggable.dataset.playerId);
     if (!playerId) {
         e.preventDefault();
         return;
     }
-    
+
     draggedPlayer = game.readyPlayers.find(p => p && p.id === playerId);
     if (!draggedPlayer) {
         e.preventDefault();
@@ -1328,28 +1356,26 @@ function handleReadyPlayerDragStart(e) {
     }
     
     draggedFromReady = true;
-    e.currentTarget.classList.add('dragging');
+    draggable.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', playerId.toString());
     document.body.style.overflow = 'hidden';
 }
 
 function handleDragEnd(e) {
-    e.currentTarget.classList.remove('dragging');
+    const draggable = e.target.closest('[data-player-id]');
+    if (draggable) draggable.classList.remove('dragging');
     document.body.style.overflow = '';
 }
 
-function handleReadyDragOver(e) {
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
-    
-    const slot = e.currentTarget.closest('.ready-player-slot');
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+
+    const slot = e.target.closest('.lineup-slot, .ready-player-slot');
     if (!slot) return;
-    
+
     const slotIndex = parseInt(slot.dataset.slotIndex);
-    
-    // Проверяем совместимость позиции игрока и слота
+
     if (draggedPlayer) {
         if (slotIndex === 0 && draggedPlayer.position !== 'Вратарь') {
             e.dataTransfer.dropEffect = 'none';
@@ -1359,21 +1385,22 @@ function handleReadyDragOver(e) {
             e.dataTransfer.dropEffect = 'none';
             return;
         }
+        if (!draggedFromReady && slot.classList.contains('lineup-slot')) {
+            e.dataTransfer.dropEffect = 'none';
+            return;
+        }
     }
-    
+
     e.dataTransfer.dropEffect = 'move';
-    
     if (!slot.classList.contains('filled')) {
         slot.classList.add('drag-over');
     }
 }
 
 function handleReadyDrop(e) {
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    }
+    if (e.stopPropagation) e.stopPropagation();
 
-    const slot = e.currentTarget.closest('.ready-player-slot');
+    const slot = e.target.closest('.ready-player-slot');
     if (!slot) return;
 
     slot.classList.remove('drag-over');
@@ -1423,44 +1450,10 @@ function handleReadyDrop(e) {
     return false;
 }
 
-// Drag and Drop для расстановки по пятеркам (из списка готовых)
-function handleLineupDragOver(e) {
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
-    
-    const slot = e.currentTarget.closest('.lineup-slot, .ready-player-slot');
-    if (!slot) return;
-    
-    const slotIndex = parseInt(slot.dataset.slotIndex);
-    
-    // Проверяем совместимость позиции игрока и слота (только для вратаря)
-    if (draggedPlayer) {
-        if (slotIndex === 0 && draggedPlayer.position !== 'Вратарь') {
-            e.dataTransfer.dropEffect = 'none';
-            return;
-        }
-        
-        // Если перетаскиваем из команды, не разрешаем
-        if (!draggedFromReady) {
-            e.dataTransfer.dropEffect = 'none';
-            return;
-        }
-    }
-    
-    e.dataTransfer.dropEffect = 'move';
-    
-    if (!slot.classList.contains('filled')) {
-        slot.classList.add('drag-over');
-    }
-}
-
 function handleLineupDrop(e) {
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    }
+    if (e.stopPropagation) e.stopPropagation();
 
-    const slot = e.currentTarget.closest('.lineup-slot, .ready-player-slot');
+    const slot = e.target.closest('.lineup-slot, .ready-player-slot');
     if (!slot) return;
 
     slot.classList.remove('drag-over');
@@ -1560,8 +1553,8 @@ function handleLineupDrop(e) {
 }
 
 function handleDragLeave(e) {
-    const slot = e.currentTarget.closest('.lineup-slot, .ready-player-slot');
-    if (slot) {
+    const slot = e.target.closest('.lineup-slot, .ready-player-slot');
+    if (slot && !slot.contains(e.relatedTarget)) {
         slot.classList.remove('drag-over');
     }
 }
@@ -1705,19 +1698,23 @@ async function saveAsJpeg() {
         // Ждем достаточно времени для полного рендеринга всех элементов
         await new Promise(resolve => setTimeout(resolve, 500));
 
+        // На мобильных устройствах уменьшаем разрешение для экономии памяти
+        const isMobile = window.innerWidth < 768;
+        const exportWidth = isMobile ? 1240 : 2480;
+        const exportHeight = isMobile ? 1754 : 3508;
+
         // Используем html2canvas для создания изображения
         const canvas = await html2canvas(exportContent, {
-            width: 2480,
-            height: 3508,
+            width: exportWidth,
+            height: exportHeight,
             scale: 1,
             backgroundColor: '#ffffff',
             useCORS: true,
-            logging: true,
+            logging: false,
             allowTaint: false,
             removeContainer: false,
             imageTimeout: 15000,
             onclone: (clonedDoc) => {
-                // Убеждаемся, что в клонированном документе все стили применены
                 const clonedContent = clonedDoc.getElementById('exportContent');
                 if (clonedContent) {
                     clonedContent.style.display = 'flex';
@@ -1740,7 +1737,8 @@ async function saveAsJpeg() {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `hockey-lineup-${game.title}-${game.date || 'no-date'}.jpg`;
+            const safeTitle = (game.title || 'lineup').replace(/[^\wа-яА-ЯёЁ\s-]/g, '').trim();
+            link.download = `hockey-lineup-${safeTitle}-${game.date || 'no-date'}.jpg`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2045,28 +2043,10 @@ function copyTeamCode() {
     
     const code = `        team = [\n${codeLines.join(',\n')}\n        ];`;
     
-    // Копируем в буфер обмена
-    navigator.clipboard.writeText(code).then(() => {
-        alert(`Код списка команды (${team.length} игроков) скопирован в буфер обмена!\n\n` +
-              `Вы можете вставить его в функцию loadData() в файле app.js, заменив начальные данные.`);
-    }).catch(err => {
-        // Fallback для старых браузеров
-        const textarea = document.createElement('textarea');
-        textarea.value = code;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            alert(`Код списка команды (${team.length} игроков) скопирован в буфер обмена!\n\n` +
-                  `Вы можете вставить его в функцию loadData() в файле app.js, заменив начальные данные.`);
-        } catch (err) {
-            alert('Не удалось скопировать. Показываю код в консоли.');
-            console.log('Код для вставки в app.js:\n', code);
-        }
-        document.body.removeChild(textarea);
-    });
+    copyToClipboard(code,
+        `Код списка команды (${team.length} игроков) скопирован в буфер обмена!\n\n` +
+        `Вы можете вставить его в функцию loadData() в файле app.js, заменив начальные данные.`
+    );
 }
 
 // Копирование списка команды как текста, сгруппированного по статусам
@@ -2169,25 +2149,7 @@ function copyTeamText() {
         return;
     }
 
-    navigator.clipboard.writeText(text).then(() => {
-        alert('Список команды со статусами скопирован в буфер обмена.');
-    }).catch(() => {
-        // Fallback для старых браузеров
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            alert('Список команды со статусами скопирован в буфер обмена.');
-        } catch (err) {
-            alert('Не удалось скопировать. Текст выведен в консоль.');
-            console.log('Список команды:\n' + text);
-        }
-        document.body.removeChild(textarea);
-    });
+    copyToClipboard(text, 'Список команды со статусами скопирован в буфер обмена.');
 }
 
 // Инициализация PWA установки

@@ -1,6 +1,7 @@
 // ВАЖНО: меняйте версию при деплое, чтобы PWA гарантированно подтягивал обновления
-const CACHE_NAME = 'hockey-lineup-v7';
-const BASE_PATH = '/hockey_team_lineup/';
+const CACHE_NAME = 'hockey-lineup-v8';
+// Динамический BASE_PATH: определяется из scope service worker (работает и на GitHub Pages, и на localhost)
+const BASE_PATH = new URL(self.registration.scope).pathname;
 const urlsToCache = [
   BASE_PATH,
   BASE_PATH + 'index.html',
